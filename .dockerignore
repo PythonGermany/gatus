@@ -1,7 +1,25 @@
-.examples
-Dockerfile
-.github
+# IDE
+*.iml
 .idea
+.vscode
+
+# OS
+.DS_Store
+
+# JS
+node_modules
+
+# Docker
+Dockerfile
+compose.yaml
+
+# Git
 .git
+.gitattributes
+.gitignore
+
+# Misc
+.github
+.examples
 *.db
 testdata
