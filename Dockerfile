@@ -8,6 +8,8 @@ RUN npm run build
 
 # Build the go application into a binary
 FROM golang:alpine AS go-builder
+ARG VERSION=dev
+ARG COMMIT_HASH=unknown
 RUN apk --update add ca-certificates
 WORKDIR /app
 COPY --exclude=web/app . ./
