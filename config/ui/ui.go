@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"html/template"
+	"time"
 
 	"github.com/TwiN/gatus/v5/buildinfo"
 	"github.com/TwiN/gatus/v5/storage"
@@ -11,16 +12,17 @@ import (
 )
 
 const (
-	defaultTitle               = "Health Dashboard | Gatus"
-	defaultDescription         = "Gatus is an advanced automated status page that lets you monitor your applications and configure alerts to notify you if there's an issue"
-	defaultHeader              = "Gatus"
-	defaultDashboardHeading    = "Health Dashboard"
-	defaultDashboardSubheading = "Monitor the health of your endpoints in real-time"
-	defaultLogo                = ""
-	defaultLink                = ""
-	defaultCustomCSS           = ""
-	defaultSortBy              = "name"
-	defaultFilterBy            = "none"
+	defaultTitle                 = "Health Dashboard | Gatus"
+	defaultDescription           = "Gatus is an advanced automated status page that lets you monitor your applications and configure alerts to notify you if there's an issue"
+	defaultHeader                = "Gatus"
+	defaultDashboardHeading      = "Health Dashboard"
+	defaultDashboardSubheading   = "Monitor the health of your endpoints in real-time"
+	defaultLogo                  = ""
+	defaultLink                  = ""
+	defaultCustomCSS             = ""
+	defaultSortBy                = "name"
+	defaultFilterBy              = "none"
+	defaultConfigRefreshInterval = 10 * time.Minute
 )
 
 var (
@@ -35,24 +37,26 @@ var (
 
 // Config is the configuration for the UI of Gatus
 type Config struct {
-	Title               string   `yaml:"title,omitempty"`                // Title of the page
-	Description         string   `yaml:"description,omitempty"`          // Meta description of the page
-	DashboardHeading    string   `yaml:"dashboard-heading,omitempty"`    // Dashboard Title between header and endpoints
-	DashboardSubheading string   `yaml:"dashboard-subheading,omitempty"` // Dashboard Description between header and endpoints
-	Header              string   `yaml:"header,omitempty"`               // Header is the text at the top of the page
-	Logo                string   `yaml:"logo,omitempty"`                 // Logo to display on the page
-	Link                string   `yaml:"link,omitempty"`                 // Link to open when clicking on the logo
-	Buttons             []Button `yaml:"buttons,omitempty"`              // Buttons to display below the header
-	CustomCSS           string   `yaml:"custom-css,omitempty"`           // Custom CSS to include in the page
-	DarkMode            *bool    `yaml:"dark-mode,omitempty"`            // DarkMode is a flag to enable dark mode by default
-	DefaultSortBy       string   `yaml:"default-sort-by,omitempty"`      // DefaultSortBy is the default sort option ('name', 'group', 'health')
-	DefaultFilterBy     string   `yaml:"default-filter-by,omitempty"`    // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
-	ShowBuildInfo       *bool    `yaml:"show-build-info,omitempty"`      // ShowBuildInfo is a flag to show build information in the footer
+	Title                 string        `yaml:"title,omitempty"`                   // Title of the page
+	Description           string        `yaml:"description,omitempty"`             // Meta description of the page
+	DashboardHeading      string        `yaml:"dashboard-heading,omitempty"`       // Dashboard Title between header and endpoints
+	DashboardSubheading   string        `yaml:"dashboard-subheading,omitempty"`    // Dashboard Description between header and endpoints
+	Header                string        `yaml:"header,omitempty"`                  // Header is the text at the top of the page
+	Logo                  string        `yaml:"logo,omitempty"`                    // Logo to display on the page
+	Link                  string        `yaml:"link,omitempty"`                    // Link to open when clicking on the logo
+	Buttons               []Button      `yaml:"buttons,omitempty"`                 // Buttons to display below the header
+	CustomCSS             string        `yaml:"custom-css,omitempty"`              // Custom CSS to include in the page
+	DarkMode              *bool         `yaml:"dark-mode,omitempty"`               // DarkMode is a flag to enable dark mode by default
+	DefaultSortBy         string        `yaml:"default-sort-by,omitempty"`         // DefaultSortBy is the default sort option ('name', 'group', 'health')
+	DefaultFilterBy       string        `yaml:"default-filter-by,omitempty"`       // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
+	ConfigRefreshInterval time.Duration `yaml:"config-refresh-interval,omitempty"` // ConfigRefreshInterval is the interval at which to refresh the UI configuration via the API
+	ShowBuildInfo         *bool         `yaml:"show-build-info,omitempty"`         // ShowBuildInfo is a flag to show build information in the footer
 	//////////////////////////////////////////////
 	// Non-configurable - used for UI rendering //
 	//////////////////////////////////////////////
-	MaximumNumberOfResults int    `yaml:"-"` // MaximumNumberOfResults to display on the page, it's not configurable because we're passing it from the storage config
-	BuildVersion           string `yaml:"-"` // BuildVersion of Gatus, it's not configurable because it is set at build time
+	MaximumNumberOfResults  int    `yaml:"-"` // MaximumNumberOfResults to display on the page, it's not configurable because we're passing it from the storage config
+	ConfigRefreshIntervalMs int64  `yaml:"-"` // ConfigRefreshIntervalMs Internal interval to be able to convert to milliseconds for the frontend before templating
+	BuildVersion            string `yaml:"-"` // BuildVersion of Gatus, it's not configurable because it is set at build time
 }
 
 func (cfg *Config) IsDarkMode() bool {
@@ -83,20 +87,21 @@ func GetDefaultConfig() *Config {
 		buildversion = buildinfo.Get().Version
 	}
 	return &Config{
-		Title:                  defaultTitle,
-		Description:            defaultDescription,
-		DashboardHeading:       defaultDashboardHeading,
-		DashboardSubheading:    defaultDashboardSubheading,
-		Header:                 defaultHeader,
-		Logo:                   defaultLogo,
-		Link:                   defaultLink,
-		CustomCSS:              defaultCustomCSS,
-		DarkMode:               &defaultDarkMode,
-		DefaultSortBy:          defaultSortBy,
-		DefaultFilterBy:        defaultFilterBy,
-		ShowBuildInfo:          &defaultShowBuildInfo,
-		MaximumNumberOfResults: storage.DefaultMaximumNumberOfResults,
-		BuildVersion:           buildversion,
+		Title:                   defaultTitle,
+		Description:             defaultDescription,
+		DashboardHeading:        defaultDashboardHeading,
+		DashboardSubheading:     defaultDashboardSubheading,
+		Header:                  defaultHeader,
+		Logo:                    defaultLogo,
+		Link:                    defaultLink,
+		CustomCSS:               defaultCustomCSS,
+		DarkMode:                &defaultDarkMode,
+		DefaultSortBy:           defaultSortBy,
+		DefaultFilterBy:         defaultFilterBy,
+		ConfigRefreshInterval:   defaultConfigRefreshInterval,
+		MaximumNumberOfResults:  storage.DefaultMaximumNumberOfResults,
+		ConfigRefreshIntervalMs: int64(defaultConfigRefreshInterval / time.Millisecond),
+		BuildVersion:            buildversion,
 	}
 }
 
@@ -139,6 +144,10 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 	} else if cfg.DefaultFilterBy != "none" && cfg.DefaultFilterBy != "failing" && cfg.DefaultFilterBy != "unstable" {
 		return ErrInvalidDefaultFilterBy
 	}
+	if cfg.ConfigRefreshInterval == 0 {
+		cfg.ConfigRefreshInterval = defaultConfigRefreshInterval
+	}
+	cfg.ConfigRefreshIntervalMs = int64(cfg.ConfigRefreshInterval / time.Millisecond)
 	if cfg.ShowBuildInfo == nil {
 		cfg.ShowBuildInfo = &defaultShowBuildInfo
 	}

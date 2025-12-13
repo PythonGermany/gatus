@@ -179,11 +179,15 @@ const tooltip = ref({})
 const mobileMenuOpen = ref(false)
 const isOidcLoading = ref(false)
 const tooltipIsPersistent = ref(false)
-let configInterval = null
+let fetchConfigTimerId = null
 
 // Computed properties
 const releaseLink = computed(() => {
   return 'https://github.com/TwiN/gatus/releases/' + (buildVersion.value ? `tag/${buildVersion.value}` : '')
+})
+
+const configRefreshInterval = computed(() => {
+  return window.config.configRefreshInterval != '{{ .UI.ConfigRefreshIntervalMs }}' ? window.config.configRefreshInterval : 600000
 })
 
 const logo = computed(() => {
@@ -255,15 +259,15 @@ const handleDocumentClick = (event) => {
 onMounted(() => {
   fetchConfig()
   // Refresh config every 10 minutes for announcements
-  configInterval = setInterval(fetchConfig, 600000)
+  fetchConfigTimerId = setInterval(fetchConfig, configRefreshInterval.value)
   // Add click listener for closing persistent tooltips
   document.addEventListener('click', handleDocumentClick)
 })
 
 // Clean up interval on unmount
 onUnmounted(() => {
-  if (configInterval) {
-    clearInterval(configInterval)
+  if (fetchConfigTimerId) {
+    clearInterval(fetchConfigTimerId)
     configInterval = null
   }
   // Remove click listener

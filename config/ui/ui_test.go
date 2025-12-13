@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/TwiN/gatus/v5/buildinfo"
 )
@@ -43,20 +44,28 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		if cfg.DefaultFilterBy != defaultFilterBy {
 			t.Errorf("expected defaultFilterBy to be %s, got %s", defaultFilterBy, cfg.DefaultFilterBy)
 		}
+		if cfg.ConfigRefreshInterval != defaultConfigRefreshInterval {
+			t.Errorf("expected ConfigRefreshInterval to be %s, got %s", defaultConfigRefreshInterval, cfg.ConfigRefreshInterval)
+		}
+		var expectedInterval = int64(defaultConfigRefreshInterval.Milliseconds())
+		if cfg.ConfigRefreshIntervalMs != expectedInterval {
+			t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedInterval, cfg.ConfigRefreshIntervalMs)
+		}
 	})
 	t.Run("custom-values", func(t *testing.T) {
 		var showBuildInfo = false
 		cfg := &Config{
-			Title:               "Custom Title",
-			Description:         "Custom Description",
-			DashboardHeading:    "Production Status",
-			DashboardSubheading: "Monitor all production endpoints",
-			Header:              "My Company",
-			Logo:                "https://example.com/logo.png",
-			Link:                "https://example.com",
-			DefaultSortBy:       "health",
-			DefaultFilterBy:     "failing",
-			ShowBuildInfo:       &showBuildInfo,
+			Title:                 "Custom Title",
+			Description:           "Custom Description",
+			DashboardHeading:      "Production Status",
+			DashboardSubheading:   "Monitor all production endpoints",
+			Header:                "My Company",
+			Logo:                  "https://example.com/logo.png",
+			Link:                  "https://example.com",
+			DefaultSortBy:         "health",
+			DefaultFilterBy:       "failing",
+			ConfigRefreshInterval: time.Hour * 2,
+			ShowBuildInfo:         &showBuildInfo,
 		}
 		if err := cfg.ValidateAndSetDefaults(); err != nil {
 			t.Error("expected no error, got", err.Error())
@@ -87,6 +96,13 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		}
 		if cfg.DefaultFilterBy != "failing" {
 			t.Errorf("expected defaultFilterBy to be preserved, got %s", cfg.DefaultFilterBy)
+		}
+		if cfg.ConfigRefreshInterval != time.Hour*2 {
+			t.Errorf("expected ConfigRefreshInterval to be preserved, got %s", cfg.ConfigRefreshInterval)
+		}
+		var expectedIntervalMs = int64((time.Hour * 2).Milliseconds())
+		if cfg.ConfigRefreshIntervalMs != expectedIntervalMs {
+			t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedIntervalMs, cfg.ConfigRefreshIntervalMs)
 		}
 		if *cfg.ShowBuildInfo != showBuildInfo {
 			t.Errorf("expected ShowBuildInfo to be preserved, got %v", *cfg.ShowBuildInfo)
@@ -119,6 +135,10 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		}
 		if cfg.Description != defaultDescription {
 			t.Errorf("expected description to use default, got %s", cfg.Description)
+		}
+		var expectedIntervalMs = int64(defaultConfigRefreshInterval.Milliseconds())
+		if cfg.ConfigRefreshIntervalMs != expectedIntervalMs {
+			t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedIntervalMs, cfg.ConfigRefreshIntervalMs)
 		}
 	})
 }
@@ -290,6 +310,44 @@ func TestConfig_ValidateAndSetDefaults_DefaultFilterBy(t *testing.T) {
 			}
 			if cfg.DefaultFilterBy != scenario.ExpectedValue {
 				t.Errorf("expected DefaultFilterBy to be %s, got %s", scenario.ExpectedValue, cfg.DefaultFilterBy)
+			}
+		})
+	}
+}
+
+func TestConfig_ValidateAndSetDefaults_ConfigRefreshInterval(t *testing.T) {
+	scenarios := []struct {
+		Name                  string
+		ConfigRefreshInterval time.Duration
+		ExpectedError         error
+		ExpectedValue         time.Duration
+	}{
+		{
+			Name:                  "ZeroConfigRefreshInterval",
+			ConfigRefreshInterval: 0,
+			ExpectedError:         nil,
+			ExpectedValue:         defaultConfigRefreshInterval,
+		},
+		{
+			Name:                  "ValidConfigRefreshInterval",
+			ConfigRefreshInterval: time.Second * 30,
+			ExpectedError:         nil,
+			ExpectedValue:         time.Second * 30,
+		},
+	}
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			cfg := &Config{ConfigRefreshInterval: scenario.ConfigRefreshInterval}
+			err := cfg.ValidateAndSetDefaults()
+			if !errors.Is(err, scenario.ExpectedError) {
+				t.Errorf("expected error %v, got %v", scenario.ExpectedError, err)
+			}
+			if cfg.ConfigRefreshInterval != scenario.ExpectedValue {
+				t.Errorf("expected ConfigRefreshInterval to be %s, got %s", scenario.ExpectedValue, cfg.ConfigRefreshInterval)
+			}
+			var expectedIntervalMs = int64(scenario.ExpectedValue.Milliseconds())
+			if cfg.ConfigRefreshIntervalMs != expectedIntervalMs {
+				t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedIntervalMs, cfg.ConfigRefreshIntervalMs)
 			}
 		})
 	}
