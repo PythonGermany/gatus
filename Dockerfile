@@ -13,7 +13,11 @@ WORKDIR /app
 COPY --exclude=web/app . ./
 RUN go mod tidy -diff
 COPY --from=web-builder /static ./web/static
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gatus .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
+-ldflags "-X github.com/TwiN/gatus/v5/buildinfo.version=${VERSION} \
+-X github.com/TwiN/gatus/v5/buildinfo.commitHash=${COMMIT_HASH} \
+-X github.com/TwiN/gatus/v5/buildinfo.date=$(date -u +'%Y-%m-%dT%H:%M:%SZ' || echo 'unknown')" \
+-o gatus .
 
 # Run Tests inside docker image if you don't have a configured go environment
 #RUN apk update && apk add --virtual build-dependencies build-base gcc
