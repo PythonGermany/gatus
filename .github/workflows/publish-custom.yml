@@ -48,5 +48,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=custom
+            VERSION=${{ inputs.tag }}
             COMMIT_HASH=${{ github.sha }}
