@@ -268,7 +268,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (fetchConfigTimerId) {
     clearInterval(fetchConfigTimerId)
-    configInterval = null
+    fetchConfigTimerId = null
   }
   // Remove click listener
   document.removeEventListener('click', handleDocumentClick)
