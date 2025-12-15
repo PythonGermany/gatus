@@ -8,8 +8,9 @@ RUN npm run build
 
 # Build the go application into a binary
 FROM golang:alpine AS go-builder
-ARG VERSION=dev
-ARG COMMIT_HASH=unknown
+ARG VERSION
+ARG REVISION
+ARG REVISION_DATE
 RUN apk --update add ca-certificates
 WORKDIR /app
 COPY --exclude=web/app . ./
@@ -17,8 +18,8 @@ RUN go mod tidy -diff
 COPY --from=web-builder /static ./web/static
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
 -ldflags "-X github.com/TwiN/gatus/v5/buildinfo.version=${VERSION} \
--X github.com/TwiN/gatus/v5/buildinfo.commitHash=${COMMIT_HASH} \
--X github.com/TwiN/gatus/v5/buildinfo.date=$(date -u +'%Y-%m-%dT%H:%M:%SZ' || echo 'unknown')" \
+-X github.com/TwiN/gatus/v5/buildinfo.revision=${REVISION} \
+-X github.com/TwiN/gatus/v5/buildinfo.date=${REVISION_DATE}" \
 -o gatus .
 
 # Run Tests inside docker image if you don't have a configured go environment
