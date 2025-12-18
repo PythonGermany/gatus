@@ -89,8 +89,6 @@ const selectedResultIndex = ref(null)
 
 const lastHoverIndex = ref(null)
 
-const highlightedIndex = computed(() => selectedResultIndex.value ?? lastHoverIndex.value)
-
 const latestResult = computed(() => {
   if (!props.endpoint.results || props.endpoint.results.length === 0) {
     return null
