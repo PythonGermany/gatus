@@ -27,8 +27,8 @@ const (
 )
 
 var (
-	defaultDarkMode      = true
-	defaultShowBuildInfo = true
+	defaultDarkMode    = true
+	defaultShowVersion = false
 
 	ErrButtonValidationFailed = errors.New("invalid button configuration: missing required name or link")
 	ErrInvalidDefaultSortBy   = errors.New("invalid default-sort-by value: must be 'name', 'group', or 'health'")
@@ -54,7 +54,7 @@ type Config struct {
 	DefaultSortBy         string           `yaml:"default-sort-by,omitempty"`         // DefaultSortBy is the default sort option ('name', 'group', 'health')
 	DefaultFilterBy       string           `yaml:"default-filter-by,omitempty"`       // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
 	ConfigRefreshInterval time.Duration    `yaml:"config-refresh-interval,omitempty"` // ConfigRefreshInterval is the interval at which to refresh the UI configuration via the API
-	ShowBuildInfo         *bool            `yaml:"show-build-info,omitempty"`         // ShowBuildInfo is a flag to show build information in the footer
+	ShowVersion           *bool            `yaml:"show-version,omitempty"`            // ShowVersion is a flag to show build information in the footer
 	StateColors           map[string]Color `yaml:"state-colors,omitempty"`            // StateColors is a map of state to color hex code // TODO#227 Add tests
 	//////////////////////////////////////////////
 	// Non-configurable - used for UI rendering //
@@ -95,8 +95,8 @@ func GetDefaultStateColors() map[string]Color {
 
 // GetDefaultConfig returns a Config struct with the default values
 func GetDefaultConfig() *Config {
-	buildversion := ""
-	if defaultShowBuildInfo {
+	var buildversion string
+	if defaultShowVersion { // Only set version if exposing it to the frontend is enabled
 		buildversion = buildinfo.Get().Version
 	}
 	return &Config{
@@ -112,9 +112,10 @@ func GetDefaultConfig() *Config {
 		DefaultSortBy:           defaultSortBy,
 		DefaultFilterBy:         defaultFilterBy,
 		ConfigRefreshInterval:   defaultConfigRefreshInterval,
+		ShowVersion:             &defaultShowVersion,
+		StateColors:             GetDefaultStateColors(),
 		MaximumNumberOfResults:  storage.DefaultMaximumNumberOfResults,
 		ConfigRefreshIntervalMs: int64(defaultConfigRefreshInterval / time.Millisecond),
-		StateColors:             GetDefaultStateColors(),
 		BuildVersion:            buildversion,
 	}
 }
@@ -162,10 +163,10 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 		cfg.ConfigRefreshInterval = defaultConfigRefreshInterval
 	}
 	cfg.ConfigRefreshIntervalMs = int64(cfg.ConfigRefreshInterval / time.Millisecond)
-	if cfg.ShowBuildInfo == nil {
-		cfg.ShowBuildInfo = &defaultShowBuildInfo
+	if cfg.ShowVersion == nil {
+		cfg.ShowVersion = &defaultShowVersion
 	}
-	if *cfg.ShowBuildInfo { // Only send version to frontend if showing the version in the UI is enabled
+	if *cfg.ShowVersion { // Only set version if exposing it to the frontend is enabled
 		cfg.BuildVersion = buildinfo.Get().Version
 	}
 	if len(cfg.StateColors) == 0 {

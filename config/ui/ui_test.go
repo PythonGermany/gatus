@@ -19,6 +19,9 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 			Header:              "",
 			Logo:                "",
 			Link:                "",
+			DefaultSortBy:       "",
+			DefaultFilterBy:     "",
+			ShowVersion:         nil,
 		}
 		if err := cfg.ValidateAndSetDefaults(); err != nil {
 			t.Error("expected no error, got", err.Error())
@@ -51,9 +54,15 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		if cfg.ConfigRefreshIntervalMs != expectedInterval {
 			t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedInterval, cfg.ConfigRefreshIntervalMs)
 		}
+		if *cfg.ShowVersion != defaultShowVersion {
+			t.Errorf("expected ShowVersion to be %v, got %v", defaultShowVersion, *cfg.ShowVersion)
+		}
+		if len(cfg.BuildVersion) > 0 {
+			t.Errorf("expected BuildVersion to be empty, got %s", cfg.BuildVersion)
+		}
 	})
 	t.Run("custom-values", func(t *testing.T) {
-		var showBuildInfo = false
+		var showVersion = true
 		cfg := &Config{
 			Title:                 "Custom Title",
 			Description:           "Custom Description",
@@ -65,7 +74,7 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 			DefaultSortBy:         "health",
 			DefaultFilterBy:       "failing",
 			ConfigRefreshInterval: time.Hour * 2,
-			ShowBuildInfo:         &showBuildInfo,
+			ShowVersion:           &showVersion,
 		}
 		if err := cfg.ValidateAndSetDefaults(); err != nil {
 			t.Error("expected no error, got", err.Error())
@@ -104,11 +113,11 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		if cfg.ConfigRefreshIntervalMs != expectedIntervalMs {
 			t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedIntervalMs, cfg.ConfigRefreshIntervalMs)
 		}
-		if *cfg.ShowBuildInfo != showBuildInfo {
-			t.Errorf("expected ShowBuildInfo to be preserved, got %v", *cfg.ShowBuildInfo)
+		if *cfg.ShowVersion != showVersion {
+			t.Errorf("expected ShowVersion to be preserved, got %v", *cfg.ShowVersion)
 		}
-		if cfg.BuildVersion != "" {
-			t.Errorf("expected BuildVersion to be empty, got %s", cfg.BuildVersion)
+		if cfg.BuildVersion != buildinfo.Get().Version {
+			t.Errorf("expected BuildVersion to be %s, got %s", buildinfo.Get().Version, cfg.BuildVersion)
 		}
 	})
 	t.Run("partial-custom-values", func(t *testing.T) {
@@ -202,12 +211,11 @@ func TestGetDefaultConfig(t *testing.T) {
 	if defaultConfig.DefaultFilterBy != defaultFilterBy {
 		t.Error("expected GetDefaultConfig() to return defaultFilterBy, got", defaultConfig.DefaultFilterBy)
 	}
-	if *defaultConfig.ShowBuildInfo != defaultShowBuildInfo {
-		t.Error("expected GetDefaultConfig() to return defaultShowBuildInfo, got", *defaultConfig.ShowBuildInfo)
+	if *defaultConfig.ShowVersion != defaultShowVersion {
+		t.Error("expected GetDefaultConfig() to return defaultShowVersion, got", *defaultConfig.ShowVersion)
 	}
-	var expectedBuildVersion = buildinfo.Get().Version
-	if defaultConfig.BuildVersion != expectedBuildVersion {
-		t.Errorf("expected BuildVersion to be %s, got %s", expectedBuildVersion, defaultConfig.BuildVersion)
+	if len(defaultConfig.BuildVersion) > 0 {
+		t.Errorf("expected BuildVersion to be empty, got %s", defaultConfig.BuildVersion)
 	}
 }
 
