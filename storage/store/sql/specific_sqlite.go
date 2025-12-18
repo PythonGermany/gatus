@@ -40,22 +40,28 @@ func (s *Store) createSQLiteSchema() error {
 	if err != nil {
 		return err
 	}
+
+	// TODO#227 event state not null?
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS endpoint_events (
 			endpoint_event_id  INTEGER PRIMARY KEY,
 			endpoint_id        INTEGER   NOT NULL REFERENCES endpoints(endpoint_id) ON DELETE CASCADE,
 			event_type         TEXT      NOT NULL,
+			event_state        TEXT      NOT NULL,
 			event_timestamp    TIMESTAMP NOT NULL
 		)
 	`)
 	if err != nil {
 		return err
 	}
+
+	// TODO#227 result state not null?
 	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS endpoint_results (
 			endpoint_result_id     INTEGER PRIMARY KEY,
 			endpoint_id            INTEGER   NOT NULL REFERENCES endpoints(endpoint_id) ON DELETE CASCADE,
 			success                INTEGER   NOT NULL,
+			state                  TEXT      NOT NULL,
 			errors                 TEXT      NOT NULL,
 			connected              INTEGER   NOT NULL,
 			status                 INTEGER   NOT NULL,

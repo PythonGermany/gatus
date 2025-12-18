@@ -40,12 +40,9 @@
               :key="index"
               :class="[
                 'flex-1 h-6 sm:h-8 rounded-sm transition-all',
-                result ? (
-                  result.success 
-                    ? (highlightedIndex === index ? 'bg-green-700' : 'bg-green-500 hover:bg-green-700')
-                    : (highlightedIndex === index ? 'bg-red-700' : 'bg-red-500 hover:bg-red-700')
-                ) : 'bg-gray-200 dark:bg-gray-700'
+                result ? 'cursor-pointer' : ''
               ]"
+              :style="`background-color: ${getResultColor(result)}; filter: ${isHighlighted(index) ? 'brightness(75%)' : 'none'}`"
               @mouseenter="result ? handleMouseEnter(result, $event, index) : clearTooltip()"
               @click="handleClick(result, $event, index)"
             />
@@ -61,12 +58,12 @@
 </template>
 
 <script setup>
-/* eslint-disable no-undef */
 import { computed, watch, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { generatePrettyTimeAgo } from '@/utils/time'
+import { getResultColor } from '@/utils/color'
 
 const router = useRouter()
 
@@ -102,8 +99,8 @@ const latestResult = computed(() => {
 })
 
 const currentStatus = computed(() => {
-  if (!latestResult.value) return 'unknown'
-  return latestResult.value.success ? 'healthy' : 'unhealthy'
+  if (!latestResult.value) return null
+  return latestResult.value.state ?? (latestResult.value.success ? 'healthy' : 'unhealthy')
 })
 
 const hostname = computed(() => {
@@ -165,6 +162,10 @@ const newestResultTime = computed(() => {
   if (!props.endpoint.results || props.endpoint.results.length === 0) return ''
   return generatePrettyTimeAgo(props.endpoint.results[props.endpoint.results.length - 1].timestamp)
 })
+
+const isHighlighted = (index) => {
+  return selectedResultIndex.value === index || lastHoverIndex.value === index
+}
 
 const navigateToDetails = () => {
   router.push(`/endpoints/${props.endpoint.key}`)

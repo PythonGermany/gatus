@@ -179,25 +179,13 @@ const tooltipIsPersistent = ref(false)
 let fetchConfigTimerId = null
 
 // Computed properties
-const configRefreshInterval = computed(() => {
-  return window.config.configRefreshInterval != '{{ .UI.ConfigRefreshIntervalMs }}' ? window.config.configRefreshInterval : 600000
-})
+const logo = computed(() => window.config?.logo ?? "")
 
-const logo = computed(() => {
-  return window.config && window.config.logo && window.config.logo !== '{{ .UI.Logo }}' ? window.config.logo : ""
-})
+const header = computed(() => window.config?.header ?? "Gatus")
 
-const header = computed(() => {
-  return window.config && window.config.header && window.config.header !== '{{ .UI.Header }}' ? window.config.header : "Gatus"
-})
+const link = computed(() => window.config?.link ?? null)
 
-const link = computed(() => {
-  return window.config && window.config.link && window.config.link !== '{{ .UI.Link }}' ? window.config.link : null
-})
-
-const buttons = computed(() => {
-  return window.config && window.config.buttons ? window.config.buttons : []
-})
+const buttons = computed(() => window.config?.buttons ?? [])
 
 // Methods
 const fetchConfig = async () => {

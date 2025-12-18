@@ -24,7 +24,7 @@ const (
 type Condition string
 
 // Validate checks if the Condition is valid
-func (c Condition) Validate() error {
+func (c Condition) Validate() error { // TODO#227 Validate conditions with linked states have valid states or just default to error state then?
 	r := &Result{}
 	c.evaluate(r, false, nil)
 	if len(r.Errors) != 0 {
@@ -37,6 +37,18 @@ func (c Condition) Validate() error {
 func (c Condition) evaluate(result *Result, dontResolveFailedConditions bool, context *gontext.Gontext) bool {
 	condition := string(c)
 	success := false
+
+	var linkedStateName string
+	if strings.Contains(condition, "::") {
+		conditionParts := strings.Split(condition, "::")
+		if len(conditionParts) != 2 { // TODO#227 Not sure if this makes sense. Checking that it is 2 or more should be enough. Then there is no character restriction in the remaining condition.
+			result.AddError(fmt.Sprintf("invalid condition: %s", condition))
+			return false
+		}
+		linkedStateName = conditionParts[0]
+		condition = conditionParts[1]
+	}
+
 	conditionToDisplay := condition
 	if strings.Contains(condition, " == ") {
 		parameters, resolvedParameters := sanitizeAndResolveWithContext(strings.Split(condition, " == "), result, context)
@@ -81,7 +93,8 @@ func (c Condition) evaluate(result *Result, dontResolveFailedConditions bool, co
 	if !success {
 		//logr.Debugf("[Condition.evaluate] Condition '%s' did not succeed because '%s' is false", condition, condition)
 	}
-	result.ConditionResults = append(result.ConditionResults, &ConditionResult{Condition: conditionToDisplay, Success: success})
+
+	result.ConditionResults = append(result.ConditionResults, &ConditionResult{Condition: conditionToDisplay, Success: success, LinkedStateName: linkedStateName})
 	return success
 }
 
