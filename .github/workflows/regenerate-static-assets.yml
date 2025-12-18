@@ -1,0 +1,24 @@
+name: regenerate-static-assets
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  regenerate-static-web-assets:
+    if: ${{ github.event.issue.pull_request }} && (contains(github.event.comment.body, '/regenerate-static-assets') || contains(github.event.comment.body, '/rsa'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Regenerate static web assets
+        run: |
+          make frontend-install-dependencies
+          make frontend-build
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Regenerate static web assets" || echo "No changes to commit"
+          git push origin HEAD:${{ github.event.issue.pull_request.head.ref }}
