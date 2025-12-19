@@ -17,7 +17,7 @@ jobs:
         with:
           command: .rsa
           success_reaction: hooray
-          # allow_forks: true # TODO: Uncomment once verified this is the way forward 
+          allow_forks: true
 
   regenerate-static--assets:
     runs-on: ubuntu-latest
