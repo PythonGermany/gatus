@@ -25,6 +25,7 @@ const label = computed(() => {
 })
 
 const color = computed(() => {
+  if (!props.status) return window.config?.localStateColors.unknown
   return getStateColor(props.status)
 })
 </script>
