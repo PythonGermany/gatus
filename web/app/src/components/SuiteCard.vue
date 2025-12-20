@@ -99,7 +99,9 @@ const latestResult = computed(() => {
 })
 
 const currentStatus = computed(() => {
-  if (!latestResult.value) return 'unknown'
+  if (!props.suite.results || props.suite.results.length === 0) {
+    return null
+  }
   return props.suite.results[props.suite.results.length - 1].success ? 'healthy' : 'unhealthy'
 })
 
@@ -109,13 +111,6 @@ const displayResults = computed(() => {
     results.unshift(null)
   }
   return results.slice(-props.maxResults)
-})
-
-const currentStatus = computed(() => {
-  if (!props.suite.results || props.suite.results.length === 0) {
-    return null
-  }
-  return props.suite.results[props.suite.results.length - 1].success ? 'healthy' : 'unhealthy'
 })
 
 const endpointCount = computed(() => {
@@ -162,10 +157,6 @@ const newestResultTime = computed(() => {
   const newestResult = props.suite.results[props.suite.results.length - 1]
   return generatePrettyTimeAgo(newestResult.timestamp)
 })
-
-const isHighlighted = (index) => {
-  return selectedResultIndex.value === index || lastHoverIndex.value === index
-}
 
 // Methods
 const isHighlighted = (index) => {
