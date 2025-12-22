@@ -1,3 +1,17 @@
+ui:
+  title: "Custom"
+  logo: "https://github.githubassets.com/favicons/favicon.svg"
+  link: "https://github.com"
+  dashboard-heading: "Custom Dashbard"
+  dashboard-subheading: "Custom subheading for the dashboard"
+  default-filter-by: "failing"
+  default-sort-by: "group"
+  buttons:
+    - name: Quad9
+      link: "https://quad9.net"
+    - name: DuckDuckGo
+      link: "https://duckduckgo.com"
+
 endpoints:
   - name: front-end
     group: core
