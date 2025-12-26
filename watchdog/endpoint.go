@@ -2,7 +2,6 @@ package watchdog
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 

@@ -479,7 +479,7 @@ func ValidateUIConfig(config *Config) error {
 	if len(colorsMissing) > 0 {
 		return fmt.Errorf("no colors configured for states: %s", strings.Join(colorsMissing, ", "))
 	} else {
-		logr.Debugf("[config.ValidateUIConfig] Configured colors for all %d state(s)", len(config.States))
+		slog.Debug("Configured colors for all states", "count", len(config.States))
 	}
 	return nil
 }
@@ -495,9 +495,9 @@ func ValidateWebConfig(config *Config) error {
 
 func ValidateStatesConfig(config *Config) error { // TODO#227 Add tests
 	if config.States == nil {
-		logr.Info("[config.ValidateStatesConfig] No custom states configured, using defaults")
+		slog.Info("No custom states configured, using defaults")
 		config.States = state.GetDefaultConfig()
-		logr.Debugf("[config.ValidateStatesConfig] Inserted %d default state(s)", len(config.States))
+		slog.Debug("Default states inserted", "count", len(config.States))
 		return nil
 	}
 
@@ -512,7 +512,7 @@ func ValidateStatesConfig(config *Config) error { // TODO#227 Add tests
 			}
 		}
 		if !found {
-			logr.Debugf("[config.ValidateStatesConfig] Inserting default state into config: %s", defaultState.Name)
+			slog.Debug("Inserting default state into config", "state", defaultState.Name)
 			config.States = append(config.States, defaultState)
 		}
 	}
@@ -538,7 +538,7 @@ func ValidateStatesConfig(config *Config) error { // TODO#227 Add tests
 			return fmt.Errorf("invalid state '%s': %w", state.Name, err)
 		}
 	}
-	logr.Infof("[config.ValidateStatesConfig] Validated %d state(s) (%d custom)", len(config.States), len(config.States)-len(defaultStates))
+	slog.Info("Validated states", "custom_count", len(config.States)-len(defaultStates), "total_count", len(config.States))
 	return nil
 }
 
