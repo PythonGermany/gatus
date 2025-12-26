@@ -3,14 +3,15 @@ package watchdog
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/TwiN/gatus/v5/config"
 	"github.com/TwiN/gatus/v5/config/endpoint"
 	"github.com/TwiN/gatus/v5/config/state"
+	"github.com/TwiN/gatus/v5/logging"
 	"github.com/TwiN/gatus/v5/metrics"
 	"github.com/TwiN/gatus/v5/storage/store"
-	"github.com/TwiN/logr"
 )
 
 type maintenanceStatus int
@@ -31,7 +32,7 @@ func monitorEndpoint(ep *endpoint.Endpoint, cfg *config.Config, extraLabels []st
 	for {
 		select {
 		case <-ctx.Done():
-			logr.Warnf("[watchdog.monitorEndpoint] Canceling current execution of group=%s; endpoint=%s; key=%s", ep.Group, ep.Name, ep.Key())
+			slog.Warn("Canceling current execution", ep.GetLogAttribute())
 			return
 		case <-ticker.C:
 			executeEndpoint(ep, cfg, extraLabels)
@@ -43,19 +44,22 @@ func monitorEndpoint(ep *endpoint.Endpoint, cfg *config.Config, extraLabels []st
 }
 
 func executeEndpoint(ep *endpoint.Endpoint, cfg *config.Config, extraLabels []string) {
+	logger := slog.With(ep.GetLogAttribute())
+
 	// Acquire semaphore to limit concurrent endpoint monitoring
 	if err := monitoringSemaphore.Acquire(ctx, 1); err != nil {
 		// Only fails if context is cancelled (during shutdown)
-		logr.Debugf("[watchdog.executeEndpoint] Context cancelled, skipping execution: %s", err.Error())
+		logger.Debug("Context cancelled; skipping execution", "error", err.Error())
 		return
 	}
 	defer monitoringSemaphore.Release(1)
 	// If there's a connectivity checker configured, check if Gatus has internet connectivity
 	if cfg.Connectivity != nil && cfg.Connectivity.Checker != nil && !cfg.Connectivity.Checker.IsConnected() {
-		logr.Infof("[watchdog.executeEndpoint] No connectivity; skipping execution")
+		logger.Info("No connectivity, skipping execution")
 		return
 	}
-	logr.Debugf("[watchdog.executeEndpoint] Monitoring group=%s; endpoint=%s; key=%s", ep.Group, ep.Name, ep.Key())
+
+	logger.Debug("Monitoring start")
 	result := ep.EvaluateHealth()
 	maintenanceState := GetMaintenanceStatus(ep, cfg)
 	if maintenanceState != noMaintenance && !result.Success {
@@ -66,17 +70,17 @@ func executeEndpoint(ep *endpoint.Endpoint, cfg *config.Config, extraLabels []st
 		metrics.PublishMetricsForEndpoint(ep, result, extraLabels)
 	}
 	UpdateEndpointStatus(ep, result)
-	if logr.GetThreshold() == logr.LevelDebug && !result.Success {
-		logr.Debugf("[watchdog.executeEndpoint] Monitored group=%s; endpoint=%s; key=%s; success=%v; errors=%d; duration=%s; body=%s", ep.Group, ep.Name, ep.Key(), result.Success, len(result.Errors), result.Duration.Round(time.Millisecond), result.Body)
+	if logging.Level() <= slog.LevelDebug && !result.Success {
+		logger.Debug("Monitoring done with errors", result.GetLogAttribute(), "body", result.Body)
 	} else {
-		logr.Infof("[watchdog.executeEndpoint] Monitored group=%s; endpoint=%s; key=%s; success=%v; errors=%d; duration=%s", ep.Group, ep.Name, ep.Key(), result.Success, len(result.Errors), result.Duration.Round(time.Millisecond))
+		logger.Info("Monitoring done", result.GetLogAttribute())
 	}
 	if maintenanceState == noMaintenance {
 		HandleAlerting(ep, result, cfg.Alerting)
 	} else {
-		logr.Debug(fmt.Sprintf("[watchdog.executeEndpoint] Not handling alerting because currently in %s maintenance window", GetMaintenanceStatusName(maintenanceState))) // TODO#227 Not sure if fmt.Sprintf is a good idea here since is not used elsewhere
+		logger.Debug("Not handling alerting due to maintenance window")
 	}
-	logr.Debugf("[watchdog.executeEndpoint] Waiting for interval=%s before monitoring group=%s endpoint=%s (key=%s) again", ep.Interval, ep.Group, ep.Name, ep.Key())
+	logger.Debug("Wait for next monitoring", "interval", ep.Interval)
 }
 
 func GetMaintenanceStatus(ep *endpoint.Endpoint, cfg *config.Config) maintenanceStatus {
@@ -105,6 +109,6 @@ func GetMaintenanceStatusName(status maintenanceStatus) string {
 // UpdateEndpointStatus persists the endpoint result in the storage
 func UpdateEndpointStatus(ep *endpoint.Endpoint, result *endpoint.Result) {
 	if err := store.Get().InsertEndpointResult(ep, result); err != nil {
-		logr.Errorf("[watchdog.UpdateEndpointStatus] Failed to insert result in storage: %s", err.Error())
+		slog.Error("Failed to insert result in storage", "error", err.Error())
 	}
 }

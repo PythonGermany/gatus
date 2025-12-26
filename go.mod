@@ -5,12 +5,11 @@ go 1.24.4
 toolchain go1.24.7
 
 require (
-	code.gitea.io/sdk/gitea v0.22.0
+	code.gitea.io/sdk/gitea v0.22.1
 	github.com/TwiN/deepmerge v0.2.2
 	github.com/TwiN/g8/v2 v2.0.0
 	github.com/TwiN/gocache/v2 v2.4.0
 	github.com/TwiN/health v1.6.0
-	github.com/TwiN/logr v0.3.1
 	github.com/TwiN/whois v1.2.0
 	github.com/aws/aws-sdk-go-v2 v1.40.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.2
