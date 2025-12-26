@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"strconv"
 	"syscall"
 	"time"
@@ -21,7 +23,21 @@ const (
 	GatusLogLevelEnvVar   = "GATUS_LOG_LEVEL"
 )
 
+var (
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+)
+
 func main() {
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			logr.Fatalf("could not create CPU profile: %s", err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	if delayInSeconds, _ := strconv.Atoi(os.Getenv("GATUS_DELAY_START_SECONDS")); delayInSeconds > 0 {
 		logr.Infof("Delaying start by %d seconds", delayInSeconds)
 		time.Sleep(time.Duration(delayInSeconds) * time.Second)
