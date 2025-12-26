@@ -27,9 +27,9 @@ func main() {
 		slog.Info("Delaying start", "seconds", delayInSeconds)
 		time.Sleep(time.Duration(delayInSeconds) * time.Second)
 	}
+	logging.Configure()
 	buildInfo := buildinfo.Get()
 	slog.Info("Starting Gatus", "version", buildInfo.Version, "revision", buildInfo.Revision, "revision_date", buildInfo.RevisionDate)
-	logging.Configure()
 	cfg, err := loadConfiguration()
 	if err != nil {
 		panic(err)
