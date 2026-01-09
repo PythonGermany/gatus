@@ -888,6 +888,9 @@ endpoints:
 | `alerting.aws-ses.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.aws-ses.overrides[].*`     | See `alerting.aws-ses.*` parameters                                                        | `{}`          |
 
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   aws-ses:
@@ -911,6 +914,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 If the `access-key-id` and `secret-access-key` are not defined Gatus will fall back to IAM authentication.
 
@@ -945,6 +949,9 @@ The following placeholders are supported in `name` and `content`:
 -   `[ALERT_DESCRIPTION]` - Resolved from `endpoints[].alerts[].description`
 -   `[RESULT_ERRORS]` - Resolved from the health evaluation errors
 
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   clickup:
@@ -968,6 +975,7 @@ endpoints:
       - type: clickup
         send-on-resolved: true
 ```
+</details>
 
 To get your ClickUp API token follow: [Generate or regenerate a Personal API Token](https://developer.clickup.com/docs/authentication#:~:text=the%20API%20docs.-,Generate%20or%20regenerate%20a%20Personal%20API%20Token,-Log%20in%20to)
 
@@ -998,6 +1006,9 @@ To find Assignee IDs:
 | `alerting.datadog.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`              |
 | `alerting.datadog.overrides[].*`     | See `alerting.datadog.*` parameters                                                        | `{}`              |
 
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   datadog:
@@ -1017,7 +1028,7 @@ endpoints:
       - type: datadog
         send-on-resolved: true
 ```
-
+</details>
 
 #### Configuring Discord alerts
 | Parameter                            | Description                                                                                | Default                             |
@@ -1030,6 +1041,9 @@ endpoints:
 | `alerting.discord.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`                                |
 | `alerting.discord.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`                                |
 | `alerting.discord.overrides[].*`     | See `alerting.discord.*` parameters                                                        | `{}`                                |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1049,7 +1063,7 @@ endpoints:
         description: "healthcheck failed"
         send-on-resolved: true
 ```
-
+</details>
 
 #### Configuring Email alerts
 | Parameter                          | Description                                                                                   | Default       |
@@ -1066,6 +1080,9 @@ endpoints:
 | `alerting.email.overrides`         | List of overrides that may be prioritized over the default configuration                      | `[]`          |
 | `alerting.email.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration           | `""`          |
 | `alerting.email.overrides[].*`     | See `alerting.email.*` parameters                                                             | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1109,6 +1126,7 @@ endpoints:
         description: "healthcheck failed"
         send-on-resolved: true
 ```
+</details>
 
 > ⚠ Some mail servers are painfully slow.
 
@@ -1125,6 +1143,9 @@ endpoints:
 The Gitea alerting provider creates an issue prefixed with `alert(gatus):` and suffixed with the endpoint's display
 name for each alert. If `send-on-resolved` is set to `true` on the endpoint alert, the issue will be automatically
 closed when the alert is resolved.
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1149,6 +1170,7 @@ endpoints:
 ```
 
 ![Gitea alert](.github/assets/gitea-alerts.png)
+</details>
 
 
 #### Configuring GitHub alerts
@@ -1163,6 +1185,9 @@ endpoints:
 The GitHub alerting provider creates an issue prefixed with `alert(gatus):` and suffixed with the endpoint's display
 name for each alert. If `send-on-resolved` is set to `true` on the endpoint alert, the issue will be automatically
 closed when the alert is resolved.
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1185,6 +1210,7 @@ endpoints:
         send-on-resolved: true
         description: "Everything's burning AAAAAHHHHHHHHHHHHHHH"
 ```
+</details>
 
 ![GitHub alert](.github/assets/github-alerts.png)
 
@@ -1205,6 +1231,9 @@ The GitLab alerting provider creates an alert prefixed with `alert(gatus):` and 
 name for each alert. If `send-on-resolved` is set to `true` on the endpoint alert, the alert will be automatically
 closed when the alert is resolved. See
 https://docs.gitlab.com/ee/operations/incident_management/integrations.html#configuration to configure the endpoint.
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1229,7 +1258,7 @@ endpoints:
 ```
 
 ![GitLab alert](.github/assets/gitlab-alerts.png)
-
+</details>
 
 #### Configuring Google Chat alerts
 | Parameter                               | Description                                                                                 | Default       |
@@ -1260,6 +1289,7 @@ endpoints:
         description: "healthcheck failed"
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Gotify alerts
@@ -1271,6 +1301,9 @@ endpoints:
 | `alerting.gotify.priority`                    | Priority of the alert according to Gotify standards.                                        | `5`                   |
 | `alerting.gotify.title`                       | Title of the notification                                                                   | `"Gatus: <endpoint>"` |
 | `alerting.gotify.default-alert`               | Default alert configuration. <br />See [Setting a default alert](#setting-a-default-alert). | N/A                   |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1295,6 +1328,7 @@ endpoints:
 Here's an example of what the notifications look like:
 
 ![Gotify notifications](.github/assets/gotify-alerts.png)
+</details>
 
 
 #### Configuring HomeAssistant alerts
@@ -1306,6 +1340,9 @@ Here's an example of what the notifications look like:
 | `alerting.homeassistant.overrides`         | List of overrides that may be prioritized over the default configuration               | `[]`          |
 | `alerting.homeassistant.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration    | `""`          |
 | `alerting.homeassistant.overrides[].*`     | See `alerting.homeassistant.*` parameters                                              | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1327,6 +1364,7 @@ endpoints:
         failure-threshold: 3
         success-threshold: 2
 ```
+</details>
 
 The alerts will be sent as events to HomeAssistant with the event type `gatus_alert`. The event data includes:
 - `status`: "triggered" or "resolved"
@@ -1343,7 +1381,9 @@ You can use these events in HomeAssistant automations to:
 - Log to history
 - And more
 
-Example HomeAssistant automation:
+<details>
+  <summary>Example HomeAssistant automation</summary>
+
 ```yaml
 automation:
   - alias: "Gatus Alert Handler"
@@ -1363,6 +1403,7 @@ automation:
             {{ '✅' if condition.success else '❌' }} {{ condition.condition }}
             {% endfor %}
 ```
+</details>
 
 To get your HomeAssistant long-lived access token:
 1. Open HomeAssistant
@@ -1387,6 +1428,9 @@ To get your HomeAssistant long-lived access token:
 | `alerting.ifttt.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.ifttt.overrides[].*`     | See `alerting.ifttt.*` parameters                                                          | `{}`          |
 
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   ifttt:
@@ -1403,6 +1447,7 @@ endpoints:
       - type: ifttt
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Ilert alerts
@@ -1423,6 +1468,9 @@ ilert instead.
 Behavior:
 - By default, `alerting.ilert.integration-key` is used as the integration key
 - If the endpoint being evaluated belongs to a group (`endpoints[].group`) matching the value of `alerting.ilert.overrides[].group`, the provider will use that override's integration key instead of `alerting.ilert.integration-key`'s
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1449,6 +1497,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Incident.io alerts
@@ -1462,6 +1511,9 @@ endpoints:
 | `alerting.incident-io.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.incident-io.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.incident-io.overrides[].*`     | See `alerting.incident-io.*` parameters                                                    | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1482,6 +1534,8 @@ endpoints:
         description: "healthcheck failed"
         send-on-resolved: true
 ```
+</details>
+
 In order to get the required alert source config id and authentication token, you must configure an HTTP alert source.
 
 > **_NOTE:_**  the source config id is of the form `https://api.incident.io/v2/alert_events/http/$ID` and the token is expected to be passed as a bearer token like so: `Authorization: Bearer $TOKEN`
@@ -1498,6 +1552,9 @@ In order to get the required alert source config id and authentication token, yo
 | `alerting.line.overrides`            | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.line.overrides[].group`    | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.line.overrides[].*`        | See `alerting.line.*` parameters                                                           | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1517,6 +1574,7 @@ endpoints:
       - type: line
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Matrix alerts
@@ -1530,6 +1588,9 @@ endpoints:
 | `alerting.matrix.overrides`              | List of overrides that may be prioritized over the default configuration                   | `[]`                               |
 | `alerting.matrix.overrides[].group`      | Endpoint group for which the configuration will be overridden by this configuration        | `""`                               |
 | `alerting.matrix.overrides[].*`          | See `alerting.matrix.*` parameters                                                         | `{}`                               |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1551,6 +1612,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Mattermost alerts
@@ -1564,6 +1626,9 @@ endpoints:
 | `alerting.mattermost.overrides`               | List of overrides that may be prioritized over the default configuration                    | `[]`          |
 | `alerting.mattermost.overrides[].group`       | Endpoint group for which the configuration will be overridden by this configuration         | `""`          |
 | `alerting.mattermost.overrides[].*`           | See `alerting.mattermost.*` parameters                                                      | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1589,7 +1654,7 @@ endpoints:
 Here's an example of what the notifications look like:
 
 ![Mattermost notifications](.github/assets/mattermost-alerts.png)
-
+</details>
 
 #### Configuring Messagebird alerts
 | Parameter                            | Description                                                                                | Default       |
@@ -1600,7 +1665,9 @@ Here's an example of what the notifications look like:
 | `alerting.messagebird.recipients`    | The recipients of the message                                                              | Required `""` |
 | `alerting.messagebird.default-alert` | Default alert configuration. <br />See [Setting a default alert](#setting-a-default-alert) | N/A           |
 
-Example of sending **SMS** text message alert using Messagebird:
+<details>
+  <summary>Example sending **SMS** text message alert using Messagebird</summary>
+
 ```yaml
 alerting:
   messagebird:
@@ -1622,6 +1689,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring New Relic alerts
@@ -1638,6 +1706,9 @@ endpoints:
 | `alerting.newrelic.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.newrelic.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.newrelic.overrides[].*`     | See `alerting.newrelic.*` parameters                                                       | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1656,6 +1727,7 @@ endpoints:
       - type: newrelic
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring n8n alerts
@@ -1673,7 +1745,9 @@ endpoints:
 
 See [n8n-nodes-gatus-trigger](https://github.com/TwiN/n8n-nodes-gatus-trigger) for a n8n community node that can be used as trigger.
 
-Example:
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   n8n:
@@ -1692,6 +1766,7 @@ endpoints:
       - type: n8n
         description: "Health check alert"
 ```
+</details>
 
 The JSON payload sent to the n8n webhook will include:
 - `title`: The configured title
@@ -1724,7 +1799,9 @@ The JSON payload sent to the n8n webhook will include:
 [ntfy](https://github.com/binwiederhier/ntfy) is an amazing project that allows you to subscribe to desktop
 and mobile notifications, making it an awesome addition to Gatus.
 
-Example:
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   ntfy:
@@ -1763,6 +1840,7 @@ endpoints:
       - type: ntfy
         description: example
 ```
+</details>
 
 
 #### Configuring Opsgenie alerts
@@ -1805,6 +1883,9 @@ Behavior:
 - By default, `alerting.pagerduty.integration-key` is used as the integration key
 - If the endpoint being evaluated belongs to a group (`endpoints[].group`) matching the value of `alerting.pagerduty.overrides[].group`, the provider will use that override's integration key instead of `alerting.pagerduty.integration-key`'s
 
+<details>
+  <summary>Example</summary>
+
 ```yaml
 alerting:
   pagerduty:
@@ -1844,6 +1925,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Plivo alerts
@@ -1861,6 +1943,9 @@ endpoints:
 | `alerting.plivo.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.plivo.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.plivo.overrides[].*`     | See `alerting.plivo.*` parameters                                                          | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1886,6 +1971,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Pushover alerts
@@ -1901,6 +1987,9 @@ endpoints:
 | `alerting.pushover.ttl`               | Set the Time-to-live of the message to be automatically deleted from pushover notifications                  | `0`                   |
 | `alerting.pushover.device`            | Device to send the message to (optional)<br/>See [devices](https://pushover.net/api#identifiers) for details | `""` (all devices)    |
 | `alerting.pushover.default-alert`     | Default alert configuration. <br />See [Setting a default alert](#setting-a-default-alert)                   | N/A                   |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1923,6 +2012,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Rocket.Chat alerts
@@ -1938,6 +2028,9 @@ endpoints:
 | `alerting.rocketchat.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.rocketchat.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.rocketchat.overrides[].*`     | See `alerting.rocketchat.*` parameters                                                     | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1955,6 +2048,7 @@ endpoints:
       - type: rocketchat
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring SendGrid alerts
@@ -1971,6 +2065,9 @@ endpoints:
 | `alerting.sendgrid.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.sendgrid.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.sendgrid.overrides[].*`     | See `alerting.sendgrid.*` parameters                                                       | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -1989,6 +2086,7 @@ endpoints:
       - type: sendgrid
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Signal alerts
@@ -2005,6 +2103,9 @@ endpoints:
 | `alerting.signal.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.signal.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.signal.overrides[].*`     | See `alerting.signal.*` parameters                                                         | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2025,6 +2126,7 @@ endpoints:
       - type: signal
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring SIGNL4 alerts
@@ -2039,6 +2141,9 @@ SIGNL4 is a mobile alerting and incident management service that sends critical 
 | `alerting.signl4.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.signl4.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.signl4.overrides[].*`     | See `alerting.signl4.*` parameters                                                         | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2055,6 +2160,7 @@ endpoints:
       - type: signl4
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Slack alerts
@@ -2067,6 +2173,9 @@ endpoints:
 | `alerting.slack.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`                                |
 | `alerting.slack.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`                                |
 | `alerting.slack.overrides[].*`     | See `alerting.slack.*` parameters                                                          | `{}`                                |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2094,6 +2203,7 @@ endpoints:
 Here's an example of what the notifications look like:
 
 ![Slack notifications](.github/assets/slack-alerts.png)
+</details>
 
 
 #### Configuring Splunk alerts
@@ -2110,6 +2220,9 @@ Here's an example of what the notifications look like:
 | `alerting.splunk.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`            |
 | `alerting.splunk.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`            |
 | `alerting.splunk.overrides[].*`     | See `alerting.splunk.*` parameters                                                         | `{}`            |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2128,6 +2241,7 @@ endpoints:
       - type: splunk
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Squadcast alerts
@@ -2142,6 +2256,9 @@ endpoints:
 | `alerting.squadcast.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.squadcast.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.squadcast.overrides[].*`     | See `alerting.squadcast.*` parameters                                                      | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2158,6 +2275,7 @@ endpoints:
       - type: squadcast
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Teams alerts *(Deprecated)*
@@ -2176,6 +2294,9 @@ endpoints:
 | `alerting.teams.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`                |
 | `alerting.teams.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`                |
 | `alerting.teams.overrides[].*`     | See `alerting.teams.*` parameters                                                          | `{}`                |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2218,6 +2339,7 @@ endpoints:
 Here's an example of what the notifications look like:
 
 ![Teams notifications](.github/assets/teams-alerts.png)
+</details>
 
 
 #### Configuring Teams Workflow alerts
@@ -2234,6 +2356,9 @@ Here's an example of what the notifications look like:
 | `alerting.teams-workflows.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`               |
 | `alerting.teams-workflows.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`               |
 | `alerting.teams-workflows.overrides[].*`     | See `alerting.teams-workflows.*` parameters                                                | `{}`               |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2274,6 +2399,7 @@ endpoints:
 Here's an example of what the notifications look like:
 
 ![Teams Workflow notifications](.github/assets/teams-workflows-alerts.png)
+</details>
 
 
 #### Configuring Telegram alerts
@@ -2289,6 +2415,9 @@ Here's an example of what the notifications look like:
 | `alerting.telegram.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`                       |
 | `alerting.telegram.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`                       |
 | `alerting.telegram.overrides[].*`     | See `alerting.telegram.*` parameters                                                       | `{}`                       |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2312,6 +2441,7 @@ endpoints:
 Here's an example of what the notifications look like:
 
 ![Telegram notifications](.github/assets/telegram-alerts.png)
+</details>
 
 
 #### Configuring Twilio alerts
@@ -2330,6 +2460,9 @@ Custom message templates are supported via the following additional parameters:
 |:----------------------------------------|:-------------------------------------------------------------------------------------------|:--------|
 | `alerting.twilio.text-twilio-triggered` | Custom message template for triggered alerts. Supports `[ENDPOINT]`, `[ALERT_DESCRIPTION]` | `""`    |
 | `alerting.twilio.text-twilio-resolved`  | Custom message template for resolved alerts. Supports `[ENDPOINT]`, `[ALERT_DESCRIPTION]`  | `""`    |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2357,6 +2490,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Vonage alerts
@@ -2374,6 +2508,9 @@ endpoints:
 | `alerting.vonage.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.vonage.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.vonage.overrides[].*`     | See `alerting.vonage.*` parameters                                                         | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2395,6 +2532,7 @@ endpoints:
         send-on-resolved: true
         description: "healthcheck failed"
 ```
+</details>
 
 
 #### Configuring Webex alerts
@@ -2409,6 +2547,9 @@ endpoints:
 | `alerting.webex.overrides`         | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.webex.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration        | `""`          |
 | `alerting.webex.overrides[].*`     | See `alerting.webex.*` parameters                                                          | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2425,6 +2566,7 @@ endpoints:
       - type: webex
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Zapier alerts
@@ -2439,6 +2581,9 @@ endpoints:
 | `alerting.zapier.overrides`     | List of overrides that may be prioritized over the default configuration                   | `[]`          |
 | `alerting.zapier.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration    | `""`          |
 | `alerting.zapier.overrides[].*` | See `alerting.zapier.*` parameters                                                        | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2455,6 +2600,7 @@ endpoints:
       - type: zapier
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring Zulip alerts
@@ -2468,6 +2614,9 @@ endpoints:
 | `alerting.zulip.overrides`         | List of overrides that may be prioritized over the default configuration            | `[]`          |
 | `alerting.zulip.overrides[].group` | Endpoint group for which the configuration will be overridden by this configuration | `""`          |
 | `alerting.zulip.overrides[].*`     | See `alerting.zulip.*` parameters                                                   | `{}`          |
+
+<details>
+  <summary>Example</summary>
 
 ```yaml
 alerting:
@@ -2490,6 +2639,7 @@ endpoints:
         description: "healthcheck failed"
         send-on-resolved: true
 ```
+</details>
 
 
 #### Configuring custom alerts
@@ -2526,6 +2676,9 @@ If you have an alert using the `custom` provider with `send-on-resolved` set to 
 The aforementioned placeholder will be replaced by `TRIGGERED` or `RESOLVED` accordingly, though it can be modified
 (details at the end of this section).
 
+<details>
+  <summary>Example</summary>
+
 For all intents and purposes, we'll configure the custom alert with a Slack webhook, but you can call anything you want.
 ```yaml
 alerting:
@@ -2551,6 +2704,7 @@ endpoints:
         send-on-resolved: true
         description: "health check failed"
 ```
+</details>
 
 Note that you can customize the resolved values for the `[ALERT_TRIGGERED_OR_RESOLVED]` placeholder like so:
 ```yaml
