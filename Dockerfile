@@ -1,26 +1,10 @@
-# Build the static web assets
-FROM node:alpine AS web-builder
-WORKDIR /app
-COPY ./web/app/package*.json ./
-RUN npm install
-COPY ./web/app/ ./
-RUN npm run build
-
 # Build the go application into a binary
-FROM golang:alpine AS go-builder
-ARG VERSION
-ARG REVISION
-ARG REVISION_DATE
+FROM golang:alpine AS builder
 RUN apk --update add ca-certificates
 WORKDIR /app
-COPY --exclude=web/app . ./
+COPY . ./
 RUN go mod tidy -diff
-COPY --from=web-builder /static ./web/static
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
--ldflags "-X github.com/TwiN/gatus/v5/buildinfo.version=${VERSION} \
--X github.com/TwiN/gatus/v5/buildinfo.revision=${REVISION} \
--X github.com/TwiN/gatus/v5/buildinfo.revisionDate=${REVISION_DATE}" \
--o gatus .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gatus .
 
 # Run Tests inside docker image if you don't have a configured go environment
 #RUN apk update && apk add --virtual build-dependencies build-base gcc
@@ -28,9 +12,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
 
 # Run the binary on an empty container
 FROM scratch
-COPY --from=go-builder /app/gatus .
-COPY --from=go-builder /app/config.yaml ./config/config.yaml
-COPY --from=go-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /app/gatus .
+COPY --from=builder /app/config.yaml ./config/config.yaml
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 ENV GATUS_CONFIG_PATH=""
 ENV GATUS_LOG_LEVEL="INFO"
 ENV PORT="8080"
