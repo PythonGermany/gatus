@@ -4,54 +4,68 @@ import (
 	"bytes"
 	"errors"
 	"html/template"
+	"time"
 
+	"github.com/TwiN/gatus/v5/buildinfo"
+	"github.com/TwiN/gatus/v5/config/state"
 	"github.com/TwiN/gatus/v5/storage"
 	static "github.com/TwiN/gatus/v5/web"
 )
 
 const (
-	defaultTitle                = "Health Dashboard | Gatus"
-	defaultDescription          = "Gatus is an advanced automated status page that lets you monitor your applications and configure alerts to notify you if there's an issue"
-	defaultHeader               = "Gatus"
-	defaultDashboardHeading     = "Health Dashboard"
-	defaultDashboardSubheading  = "Monitor the health of your endpoints in real-time"
-	defaultLogo                 = ""
-	defaultLink                 = ""
+	defaultTitle                 = "Health Dashboard | Gatus"
+	defaultDescription           = "Gatus is an advanced automated status page that lets you monitor your applications and configure alerts to notify you if there's an issue"
+	defaultHeader                = "Gatus"
+	defaultDashboardHeading      = "Health Dashboard"
+	defaultDashboardSubheading   = "Monitor the health of your endpoints in real-time"
+	defaultLogo                  = ""
+	defaultLink                  = ""
 	defaultFavicon              = "/favicon.ico"
 	defaultFavicon16            = "/favicon-16x16.png"
 	defaultFavicon32            = "/favicon-32x32.png"
-	defaultCustomCSS            = ""
-	defaultSortBy               = "name"
-	defaultFilterBy             = "none"
+	defaultCustomCSS             = ""
+	defaultSortBy                = "name"
+	defaultFilterBy              = "none"
+	defaultConfigRefreshInterval = 10 * time.Minute
 )
 
 var (
-	defaultDarkMode = true
+	defaultDarkMode    = true
+	defaultShowVersion = false
 
 	ErrButtonValidationFailed = errors.New("invalid button configuration: missing required name or link")
 	ErrInvalidDefaultSortBy   = errors.New("invalid default-sort-by value: must be 'name', 'group', or 'health'")
 	ErrInvalidDefaultFilterBy = errors.New("invalid default-filter-by value: must be 'none', 'failing', or 'unstable'")
+	ErrEmptyBuildVersion      = errors.New("build version cannot be empty: This should never happen")
+	ErrInvalidColorHexCode    = errors.New("invalid color hex code: must be in the format #RRGGBB")
 )
+
+type Color string
 
 // Config is the configuration for the UI of Gatus
 type Config struct {
-	Title                   string   `yaml:"title,omitempty"`                  // Title of the page
-	Description             string   `yaml:"description,omitempty"`            // Meta description of the page
-	DashboardHeading        string   `yaml:"dashboard-heading,omitempty"`      // Dashboard Title between header and endpoints
-	DashboardSubheading     string   `yaml:"dashboard-subheading,omitempty"`   // Dashboard Description between header and endpoints
-	Header                  string   `yaml:"header,omitempty"`                 // Header is the text at the top of the page
-	Logo                    string   `yaml:"logo,omitempty"`                   // Logo to display on the page
-	Link                    string   `yaml:"link,omitempty"`                   // Link to open when clicking on the logo
+	Title                 string           `yaml:"title,omitempty"`                   // Title of the page
+	Description           string           `yaml:"description,omitempty"`             // Meta description of the page
+	DashboardHeading      string           `yaml:"dashboard-heading,omitempty"`       // Dashboard Title between header and endpoints
+	DashboardSubheading   string           `yaml:"dashboard-subheading,omitempty"`    // Dashboard Description between header and endpoints
+	Header                string           `yaml:"header,omitempty"`                  // Header is the text at the top of the page
+	Logo                  string           `yaml:"logo,omitempty"`                    // Logo to display on the page
+	Link                  string           `yaml:"link,omitempty"`                    // Link to open when clicking on the logo
 	Favicon                 Favicon  `yaml:"favicon,omitempty"`                // Favourite icon to display in web browser tab or address bar
-	Buttons                 []Button `yaml:"buttons,omitempty"`                // Buttons to display below the header
-	CustomCSS               string   `yaml:"custom-css,omitempty"`             // Custom CSS to include in the page
-	DarkMode                *bool    `yaml:"dark-mode,omitempty"`              // DarkMode is a flag to enable dark mode by default
-	DefaultSortBy           string   `yaml:"default-sort-by,omitempty"`        // DefaultSortBy is the default sort option ('name', 'group', 'health')
-	DefaultFilterBy         string   `yaml:"default-filter-by,omitempty"`      // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
+	Buttons               []Button         `yaml:"buttons,omitempty"`                 // Buttons to display below the header
+	CustomCSS             string           `yaml:"custom-css,omitempty"`              // Custom CSS to include in the page
+	DarkMode              *bool            `yaml:"dark-mode,omitempty"`               // DarkMode is a flag to enable dark mode by default
+	DefaultSortBy         string           `yaml:"default-sort-by,omitempty"`         // DefaultSortBy is the default sort option ('name', 'group', 'health')
+	DefaultFilterBy       string           `yaml:"default-filter-by,omitempty"`       // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
+	ConfigRefreshInterval time.Duration    `yaml:"config-refresh-interval,omitempty"` // ConfigRefreshInterval is the interval at which to refresh the UI configuration via the API
+	ShowVersion           *bool            `yaml:"show-version,omitempty"`            // ShowVersion is a flag to show build information in the footer
+	StateColors           map[string]Color `yaml:"state-colors,omitempty"`            // StateColors is a map of state to color hex code // TODO#227 Add tests
 	//////////////////////////////////////////////
 	// Non-configurable - used for UI rendering //
 	//////////////////////////////////////////////
-	MaximumNumberOfResults int `yaml:"-"` // MaximumNumberOfResults to display on the page, it's not configurable because we're passing it from the storage config
+	MaximumNumberOfResults  int    `yaml:"-"` // MaximumNumberOfResults to display on the page, it's not configurable because we're passing it from the storage config
+	ConfigRefreshIntervalMs int64  `yaml:"-"` // ConfigRefreshIntervalMs Internal interval to be able to convert to milliseconds for the frontend before templating
+	BuildVersion            string `yaml:"-"` // BuildVersion of Gatus, it's not configurable because it is set at build time
 }
 
 func (cfg *Config) IsDarkMode() bool {
@@ -81,26 +95,43 @@ type Favicon struct {
 	Size32x32 string `yaml:"size32x32,omitempty"` // URL or path to favourite icon for 32x32 size.
 }
 
+func GetDefaultStateColors() map[string]Color {
+	return map[string]Color{
+		state.DefaultHealthyStateName:     "#22C55E", // Green
+		state.DefaultUnhealthyStateName:   "#E43B3C", // Red (Default for result bar before was "#EF4444 saw #AD0116 on GitHub (was too dark) so I used https://colordesigner.io/gradient-generator to use some color in between TODO#227 Change to darker red for better visibility good?)
+		state.DefaultMaintenanceStateName: "#3B82F6", // Blue
+	}
+}
+
 // GetDefaultConfig returns a Config struct with the default values
 func GetDefaultConfig() *Config {
+	var buildversion string
+	if defaultShowVersion { // Only set version if exposing it to the frontend is enabled
+		buildversion = buildinfo.Get().Version
+	}
 	return &Config{
-		Title:                  defaultTitle,
-		Description:            defaultDescription,
-		DashboardHeading:       defaultDashboardHeading,
-		DashboardSubheading:    defaultDashboardSubheading,
-		Header:                 defaultHeader,
-		Logo:                   defaultLogo,
-		Link:                   defaultLink,
-		CustomCSS:              defaultCustomCSS,
-		DarkMode:               &defaultDarkMode,
-		DefaultSortBy:          defaultSortBy,
-		DefaultFilterBy:        defaultFilterBy,
-		MaximumNumberOfResults: storage.DefaultMaximumNumberOfResults,
+		Title:                   defaultTitle,
+		Description:             defaultDescription,
+		DashboardHeading:        defaultDashboardHeading,
+		DashboardSubheading:     defaultDashboardSubheading,
+		Header:                  defaultHeader,
+		Logo:                    defaultLogo,
+		Link:                    defaultLink,
+		CustomCSS:               defaultCustomCSS,
+		DarkMode:                &defaultDarkMode,
+		DefaultSortBy:           defaultSortBy,
+		DefaultFilterBy:         defaultFilterBy,
+		ConfigRefreshInterval:   defaultConfigRefreshInterval,
+		ShowVersion:             &defaultShowVersion,
+		StateColors:             GetDefaultStateColors(),
+		MaximumNumberOfResults:  storage.DefaultMaximumNumberOfResults,
 		Favicon: Favicon{
 			Default:   defaultFavicon,
 			Size16x16: defaultFavicon16,
 			Size32x32: defaultFavicon32,
 		},
+		ConfigRefreshIntervalMs: int64(defaultConfigRefreshInterval / time.Millisecond),
+		BuildVersion:            buildversion,
 	}
 }
 
@@ -143,14 +174,29 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 	} else if cfg.DefaultFilterBy != "none" && cfg.DefaultFilterBy != "failing" && cfg.DefaultFilterBy != "unstable" {
 		return ErrInvalidDefaultFilterBy
 	}
-	if len(cfg.Favicon.Default) == 0 {
-		cfg.Favicon.Default = defaultFavicon
+	if cfg.ConfigRefreshInterval == 0 {
+		cfg.ConfigRefreshInterval = defaultConfigRefreshInterval
 	}
-	if len(cfg.Favicon.Size16x16) == 0 {
-		cfg.Favicon.Size16x16 = defaultFavicon16
+	cfg.ConfigRefreshIntervalMs = int64(cfg.ConfigRefreshInterval / time.Millisecond)
+	if cfg.ShowVersion == nil {
+		cfg.ShowVersion = &defaultShowVersion
 	}
-	if len(cfg.Favicon.Size32x32) == 0 {
-		cfg.Favicon.Size32x32 = defaultFavicon32
+	if *cfg.ShowVersion { // Only set version if exposing it to the frontend is enabled
+		cfg.BuildVersion = buildinfo.Get().Version
+	}
+	if len(cfg.StateColors) == 0 {
+		cfg.StateColors = GetDefaultStateColors()
+	} else {
+		for _, color := range cfg.StateColors {
+			if err := color.Validate(); err != nil {
+				return err
+			}
+		}
+		for stateName, defaultColor := range GetDefaultStateColors() {
+			if _, exists := cfg.StateColors[stateName]; !exists {
+				cfg.StateColors[stateName] = defaultColor
+			}
+		}
 	}
 	for _, btn := range cfg.Buttons {
 		if err := btn.Validate(); err != nil {
@@ -169,4 +215,23 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 type ViewData struct {
 	UI    *Config
 	Theme string
+}
+
+func (color Color) Validate() error {
+	if !IsValidColorHexCode(color) {
+		return ErrInvalidColorHexCode
+	}
+	return nil
+}
+
+func IsValidColorHexCode(color Color) bool {
+	if len(color) != 7 || color[0] != '#' {
+		return false
+	}
+	for _, char := range color[1:] {
+		if (char < '0' || char > '9') && (char < 'A' || char > 'F') && (char < 'a' || char > 'f') {
+			return false
+		}
+	}
+	return true
 }

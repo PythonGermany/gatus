@@ -100,7 +100,7 @@
         <div class="container mx-auto px-4 py-6 max-w-7xl">
           <div class="flex flex-col items-center gap-4">
             <div class="text-sm text-muted-foreground text-center">
-              Powered by <a href="https://gatus.io" target="_blank" class="font-medium text-emerald-800 hover:text-emerald-600">Gatus</a>
+              Powered by <a href="https://gatus.io" target="_blank" class="font-medium text-emerald-800 hover:text-emerald-600">Gatus </a> {{ buildVersion && ` ${buildVersion}` }}
             </div>
             <Social />
           </div>
@@ -164,6 +164,9 @@ import Loading from './components/Loading.vue'
 
 const route = useRoute()
 
+// Build info
+const buildVersion = ref(window.config && window.config.buildVersion != '{{ .UI.BuildVersion }}' ? window.config.buildVersion : null)
+
 // State
 const retrievedConfig = ref(false)
 const config = ref({ oidc: false, authenticated: true })
@@ -172,24 +175,18 @@ const tooltip = ref({})
 const mobileMenuOpen = ref(false)
 const isOidcLoading = ref(false)
 const tooltipIsPersistent = ref(false)
-let configInterval = null
+let fetchConfigTimerId = null
 
 // Computed properties
-const logo = computed(() => {
-  return window.config && window.config.logo && window.config.logo !== '{{ .UI.Logo }}' ? window.config.logo : ""
-})
+const configRefreshInterval = computed(() => window.config?.configRefreshInterval ?? 600000)
 
-const header = computed(() => {
-  return window.config && window.config.header && window.config.header !== '{{ .UI.Header }}' ? window.config.header : "Gatus"
-})
+const logo = computed(() => window.config?.logo ?? "")
 
-const link = computed(() => {
-  return window.config && window.config.link && window.config.link !== '{{ .UI.Link }}' ? window.config.link : null
-})
+const header = computed(() => window.config?.header ?? "Gatus")
 
-const buttons = computed(() => {
-  return window.config && window.config.buttons ? window.config.buttons : []
-})
+const link = computed(() => window.config?.link ?? null)
+
+const buttons = computed(() => window.config?.buttons ?? [])
 
 // Methods
 const fetchConfig = async () => {
@@ -219,10 +216,8 @@ const showTooltip = (result, event, action = 'hover') => {
       tooltipIsPersistent.value = true
     }
   } else if (action === 'hover') {
-    // Only update tooltip on hover if not in persistent mode
-    if (!tooltipIsPersistent.value) {
-      tooltip.value = { result, event }
-    }
+    if (tooltipIsPersistent.value) return
+    tooltip.value = result ? { result, event } : {}
   }
 }
 
@@ -246,16 +241,16 @@ const handleDocumentClick = (event) => {
 onMounted(() => {
   fetchConfig()
   // Refresh config every 10 minutes for announcements
-  configInterval = setInterval(fetchConfig, 600000)
+  fetchConfigTimerId = setInterval(fetchConfig, configRefreshInterval.value)
   // Add click listener for closing persistent tooltips
   document.addEventListener('click', handleDocumentClick)
 })
 
 // Clean up interval on unmount
 onUnmounted(() => {
-  if (configInterval) {
-    clearInterval(configInterval)
-    configInterval = null
+  if (fetchConfigTimerId) {
+    clearInterval(fetchConfigTimerId)
+    fetchConfigTimerId = null
   }
   // Remove click listener
   document.removeEventListener('click', handleDocumentClick)
