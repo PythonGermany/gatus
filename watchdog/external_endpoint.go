@@ -14,21 +14,22 @@ import (
 )
 
 func monitorExternalEndpointHeartbeat(ee *endpoint.ExternalEndpoint, cfg *config.Config, extraLabels []string, ctx context.Context) {
-	timeToNextCheck := ee.Heartbeat.Interval
+	logger := slog.With(ee.GetLogAttribute())
 
+	timeToNextCheck := ee.Heartbeat.Interval
 	lastStatus, err := store.Get().GetEndpointStatusByKey(ee.Key(), paging.NewEndpointStatusParams().WithResults(0, 1))
 	if err != nil {
-		logr.Errorf("[watchdog.monitorExternalEndpointHeartbeat] Failed to get last endpoint status: %s", err.Error())
+		logger.Error("Failed to get last endpoint status", "error", err.Error())
 	} else if lastStatus != nil {
 		if results := lastStatus.Results; len(results) > 0 {
 			timeSinceLastResult := time.Since(results[0].Timestamp)
-			logr.Debugf("[watchdog.monitorExternalEndpointHeartbeat] Time since last result: '%s'", timeSinceLastResult)
+			logger.Debug("Time since last result", "time", timeSinceLastResult)
 			if timeSinceLastResult < timeToNextCheck {
 				timeToNextCheck -= timeSinceLastResult
 			}
 		}
 	}
-	logr.Debugf("[watchdog.monitorExternalEndpointHeartbeat] Waiting for duration=%s before checking heartbeat for group=%s endpoint=%s (key=%s)", timeToNextCheck, ee.Group, ee.Name, ee.Key())
+	logger.Debug("Waiting before checking heartbeat", "time", timeToNextCheck)
 
 	ticker := time.NewTicker(timeToNextCheck)
 	defer ticker.Stop()
