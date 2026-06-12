@@ -24,6 +24,7 @@ const (
 	defaultCustomCSS           = ""
 	defaultSortBy              = "name"
 	defaultFilterBy            = "none"
+	defaultLoginSubtitle       = "System Monitoring Dashboard"
 )
 
 var (
@@ -52,6 +53,7 @@ type Config struct {
 	DarkMode            *bool            `yaml:"dark-mode,omitempty"`            // DarkMode is a flag to enable dark mode by default
 	DefaultSortBy       string           `yaml:"default-sort-by,omitempty"`      // DefaultSortBy is the default sort option ('name', 'group', 'health')
 	DefaultFilterBy     string           `yaml:"default-filter-by,omitempty"`    // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
+	LoginSubtitle       string           `yaml:"login-subtitle,omitempty"`       // LoginSubtitle is the subtitle displayed on the OIDC login page
 	StateColors         map[string]Color `yaml:"state-colors,omitempty"`         // StateColors is a map of state to color hex code // TODO#227 Add tests
 	//////////////////////////////////////////////
 	// Non-configurable - used for UI rendering //
@@ -108,6 +110,7 @@ func GetDefaultConfig() *Config {
 		DarkMode:               &defaultDarkMode,
 		DefaultSortBy:          defaultSortBy,
 		DefaultFilterBy:        defaultFilterBy,
+		LoginSubtitle:          defaultLoginSubtitle,
 		StateColors:            GetDefaultStateColors(),
 		MaximumNumberOfResults: storage.DefaultMaximumNumberOfResults,
 		Favicon: Favicon{
@@ -170,6 +173,9 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 				cfg.StateColors[stateName] = defaultColor
 			}
 		}
+	}
+	if len(cfg.LoginSubtitle) == 0 {
+		cfg.LoginSubtitle = defaultLoginSubtitle
 	}
 	if len(cfg.Favicon.Default) == 0 {
 		cfg.Favicon.Default = defaultFavicon

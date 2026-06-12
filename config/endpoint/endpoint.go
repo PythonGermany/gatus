@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand"
 	"net"
 	"net/http"
@@ -523,9 +524,7 @@ func (e *Endpoint) call(result *Result) {
 	} else if endpointType == TypeWS {
 		wsHeaders := map[string]string{}
 		if e.Headers != nil {
-			for k, v := range e.Headers {
-				wsHeaders[k] = v
-			}
+			maps.Copy(wsHeaders, e.Headers)
 		}
 		if !hasHeader(wsHeaders, UserAgentHeader) {
 			wsHeaders[UserAgentHeader] = GatusUserAgent
