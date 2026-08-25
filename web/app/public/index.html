@@ -17,6 +17,7 @@
             maximumNumberOfResults: "{{ .UI.MaximumNumberOfResults }}",
             defaultSortBy: "{{ .UI.DefaultSortBy }}",
             defaultFilterBy: "{{ .UI.DefaultFilterBy }}",
+            loginSubtitle: "{{ .UI.LoginSubtitle }}",
             stateColors: {},
           };
           Function(`{{- range .UI.Buttons}}window.config.buttons.push({name:"{{ .Name }}",link:"{{ .Link }}"});{{end}}`)();
