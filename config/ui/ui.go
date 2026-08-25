@@ -24,6 +24,7 @@ const (
 	defaultCustomCSS            = ""
 	defaultSortBy               = "name"
 	defaultFilterBy             = "none"
+	defaultLoginSubtitle        = "System Monitoring Dashboard"
 )
 
 var (
@@ -51,7 +52,8 @@ type Config struct {
 	DarkMode                *bool    `yaml:"dark-mode,omitempty"`              // DarkMode is a flag to enable dark mode by default
 	DefaultSortBy           string   `yaml:"default-sort-by,omitempty"`        // DefaultSortBy is the default sort option ('name', 'group', 'health')
 	DefaultFilterBy         string   `yaml:"default-filter-by,omitempty"`      // DefaultFilterBy is the default filter option ('none', 'failing', 'unstable')
-	ShowVersion             *bool    `yaml:"show-version,omitempty"`           // ShowVersion is a flag to show build information in the footer
+	LoginSubtitle           string   `yaml:"login-subtitle,omitempty"`         // LoginSubtitle is the subtitle displayed on the OIDC login page
+  ShowVersion             *bool    `yaml:"show-version,omitempty"`           // ShowVersion is a flag to show build information in the footer
 	//////////////////////////////////////////////
 	// Non-configurable - used for UI rendering //
 	//////////////////////////////////////////////
@@ -104,6 +106,7 @@ func GetDefaultConfig() *Config {
 		DarkMode:               &defaultDarkMode,
 		DefaultSortBy:          defaultSortBy,
 		DefaultFilterBy:        defaultFilterBy,
+		LoginSubtitle:          defaultLoginSubtitle,
 		ShowVersion:            &defaultShowVersion,
 		MaximumNumberOfResults: storage.DefaultMaximumNumberOfResults,
 		BuildVersion:           buildversion,
@@ -154,12 +157,15 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 	} else if cfg.DefaultFilterBy != "none" && cfg.DefaultFilterBy != "failing" && cfg.DefaultFilterBy != "unstable" {
 		return ErrInvalidDefaultFilterBy
 	}
-	if cfg.ShowVersion == nil {
+	if len(cfg.LoginSubtitle) == 0 {
+		cfg.LoginSubtitle = defaultLoginSubtitle
+	}
+  if cfg.ShowVersion == nil {
 		cfg.ShowVersion = &defaultShowVersion
 	}
 	if *cfg.ShowVersion { // Only set version if exposing it to the frontend is enabled
 		cfg.BuildVersion = buildinfo.Get().Version
-	}
+  }
 	if len(cfg.Favicon.Default) == 0 {
 		cfg.Favicon.Default = defaultFavicon
 	}
