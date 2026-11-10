@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"log/slog"
+	"slices"
 	"time"
 )
 
@@ -81,11 +82,7 @@ func (r *Result) GetLogAttribute() slog.Attr {
 // AddError adds an error to the result's list of errors.
 // It also ensures that there are no duplicates.
 func (r *Result) AddError(error string) {
-	for _, resultError := range r.Errors {
-		if resultError == error {
-			// If the error already exists, don't add it
-			return
-		}
+	if !slices.Contains(r.Errors, error) {
+		r.Errors = append(r.Errors, error+"")
 	}
-	r.Errors = append(r.Errors, error+"")
 }

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -140,7 +141,7 @@ func (config *Config) GetUniqueExtraMetricLabels() []string {
 			continue
 		}
 		for label := range ep.ExtraLabels {
-			if contains(labels, label) {
+			if slices.Contains(labels, label) {
 				continue
 			}
 			labels = append(labels, label)
@@ -651,8 +652,13 @@ func ValidateUniqueKeys(config *Config) error {
 func ValidateSecurityConfig(config *Config) error {
 	if config.Security != nil {
 		if !config.Security.ValidateAndSetDefaults() {
-			slog.Debug("Basic security configuration has been validated")
 			return ErrInvalidSecurityConfig
+		}
+		if config.Security.OIDC != nil {
+			slog.Info("OIDC security configuration validated", "issuer", config.Security.OIDC.IssuerURL)
+		}
+		if config.Security.Basic != nil {
+			slog.Info("Basic security configuration validated")
 		}
 	}
 	return nil
@@ -694,6 +700,7 @@ func ValidateAlertingConfig(alertingConfig *alerting.Config, endpoints []*endpoi
 		alert.TypePagerDuty,
 		alert.TypePlivo,
 		alert.TypePushover,
+		alert.TypeResend,
 		alert.TypeRocketChat,
 		alert.TypeSendGrid,
 		alert.TypeSignal,

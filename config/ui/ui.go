@@ -27,6 +27,7 @@ const (
 	defaultSortBy                = "name"
 	defaultFilterBy              = "none"
 	defaultConfigRefreshInterval = 10 * time.Minute
+	defaultLoginSubtitle         = "System Monitoring Dashboard"
 )
 
 var (
@@ -60,6 +61,7 @@ type Config struct {
 	ConfigRefreshInterval time.Duration    `yaml:"config-refresh-interval,omitempty"` // ConfigRefreshInterval is the interval at which to refresh the UI configuration via the API
 	ShowVersion           *bool            `yaml:"show-version,omitempty"`            // ShowVersion is a flag to show build information in the footer
 	StateColors           map[string]Color `yaml:"state-colors,omitempty"`            // StateColors is a map of state to color hex code // TODO#227 Add tests
+	LoginSubtitle         string           `yaml:"login-subtitle,omitempty"`          // LoginSubtitle is the subtitle displayed on the OIDC login page
 	//////////////////////////////////////////////
 	// Non-configurable - used for UI rendering //
 	//////////////////////////////////////////////
@@ -124,6 +126,7 @@ func GetDefaultConfig() *Config {
 		ConfigRefreshInterval:  defaultConfigRefreshInterval,
 		ShowVersion:            &defaultShowVersion,
 		StateColors:            GetDefaultStateColors(),
+		LoginSubtitle:          defaultLoginSubtitle,
 		MaximumNumberOfResults: storage.DefaultMaximumNumberOfResults,
 		Favicon: Favicon{
 			Default:   defaultFavicon,
@@ -173,6 +176,9 @@ func (cfg *Config) ValidateAndSetDefaults() error {
 		cfg.DefaultFilterBy = defaultFilterBy
 	} else if cfg.DefaultFilterBy != "none" && cfg.DefaultFilterBy != "failing" && cfg.DefaultFilterBy != "unstable" {
 		return ErrInvalidDefaultFilterBy
+	}
+	if len(cfg.LoginSubtitle) == 0 {
+		cfg.LoginSubtitle = defaultLoginSubtitle
 	}
 	if len(cfg.Favicon.Default) == 0 {
 		cfg.Favicon.Default = defaultFavicon

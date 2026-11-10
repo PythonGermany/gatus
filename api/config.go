@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/TwiN/gatus/v5/config"
 	"github.com/TwiN/gatus/v5/security"
@@ -21,6 +22,7 @@ func (handler ConfigHandler) GetConfig(c *fiber.Ctx) error {
 		hasOIDC = handler.securityConfig.OIDC != nil
 		isAuthenticated = handler.securityConfig.IsAuthenticated(c)
 	}
+	slog.Debug("Serving config", "oidc", hasOIDC, "authenticated", isAuthenticated)
 
 	// Prepare response with announcements
 	response := map[string]interface{}{
