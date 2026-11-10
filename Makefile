@@ -27,15 +27,19 @@ test:
 ##########
 
 DIRTY=$(shell test -n "$$(git status --porcelain)" && echo "-dirty")
+
+.PHONY: docker-build
 docker-build:
 	docker build --build-arg VERSION=$(VERSION) \
 		--build-arg REVISION=$(shell git rev-parse HEAD)$(DIRTY) \
 		--build-arg REVISION_DATE=$(shell TZ=UTC git show -s --format=%cd --date=iso-strict-local) \
 		-t twinproduction/gatus:latest .
 
+.PHONY: docker-run
 docker-run:
 	docker run --rm -p 8080:8080 --name gatus twinproduction/gatus:latest
 
+.PHONY: docker-build-and-run
 docker-build-and-run: docker-build docker-run
 
 
@@ -43,11 +47,14 @@ docker-build-and-run: docker-build docker-run
 # Front end #
 #############
 
-frontend-install-dependencies:
+.PHONY: frontend-install
+frontend-install:
 	npm --prefix web/app install
 
+.PHONY: frontend-build
 frontend-build:
 	npm --prefix web/app run build
 
-frontend-run:
+.PHONY: frontend-dev
+frontend-dev:
 	npm --prefix web/app run serve

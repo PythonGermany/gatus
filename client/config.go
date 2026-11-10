@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -34,6 +35,7 @@ var (
 		IgnoreRedirect: false,
 		Timeout:        defaultTimeout,
 		Network:        "ip",
+		StoreCookies:   false,
 	}
 )
 
@@ -81,6 +83,9 @@ type Config struct {
 
 	// ResolvedTunnel is the resolved SSH tunnel for this specific Config
 	ResolvedTunnel *sshtunnel.SSHTunnel `yaml:"-"`
+
+	// StoreCookies determines whether cookies are stored and included across requests.
+	StoreCookies bool `yaml:"store-cookies,omitempty"`
 
 	httpClient *http.Client
 }
@@ -279,6 +284,13 @@ func (c *Config) getHTTPClient() *http.Client {
 					return c.ResolvedTunnel.Dial(network, addr)
 				}
 			}
+		}
+		if c.StoreCookies {
+			jar, err := cookiejar.New(nil)
+			if err != nil {
+				panic("failed to initialize cookie jar: " + err.Error())
+			}
+			c.httpClient.Jar = jar
 		}
 	}
 	return c.httpClient

@@ -28,17 +28,19 @@ type Config struct {
 
 // ValidateAndSetDefaults returns whether the security configuration is valid or not and sets default values.
 func (c *Config) ValidateAndSetDefaults() bool {
-	return (c.Basic != nil && c.Basic.isValid()) || (c.OIDC != nil && c.OIDC.ValidateAndSetDefaults())
+	return (c.Basic == nil || c.Basic.isValid()) && (c.OIDC == nil || c.OIDC.ValidateAndSetDefaults())
 }
 
 // RegisterHandlers registers all handlers required based on the security configuration
 func (c *Config) RegisterHandlers(router fiber.Router) error {
 	if c.OIDC != nil {
 		if err := c.OIDC.initialize(); err != nil {
+			slog.Error("Failed to initialize OIDC provider", "error", err.Error())
 			return err
 		}
 		router.All("/oidc/login", c.OIDC.loginHandler)
 		router.All("/authorization-code/callback", adaptor.HTTPHandlerFunc(c.OIDC.callbackHandler))
+		slog.Info("Registered OIDC routes", "routes", []string{"/oidc/login", "/authorization-code/callback"})
 	}
 	return nil
 }
@@ -103,7 +105,16 @@ func (c *Config) IsAuthenticated(ctx *fiber.Ctx) bool {
 			return false
 		}
 		token := c.gate.ExtractTokenFromRequest(request)
+		if len(token) == 0 {
+			slog.Debug("No session token found in request")
+			return false
+		}
 		_, hasSession := sessions.Get(token)
+		if hasSession {
+			slog.Debug("Active session found")
+		} else {
+			slog.Debug("Session token expired or invalid")
+		}
 		return hasSession
 	}
 	return false

@@ -69,6 +69,9 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		if len(cfg.BuildVersion) > 0 {
 			t.Errorf("expected BuildVersion to be empty, got %s", cfg.BuildVersion)
 		}
+		if cfg.LoginSubtitle != defaultLoginSubtitle {
+			t.Errorf("expected LoginSubtitle to be %s, got %s", defaultLoginSubtitle, cfg.LoginSubtitle)
+		}
 	})
 	t.Run("custom-values", func(t *testing.T) {
 		var showVersion = true
@@ -84,6 +87,7 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 			DefaultFilterBy:       "failing",
 			ConfigRefreshInterval: time.Hour * 2,
 			ShowVersion:           &showVersion,
+			LoginSubtitle:         "Welcome",
 		}
 		if err := cfg.ValidateAndSetDefaults(); err != nil {
 			t.Error("expected no error, got", err.Error())
@@ -128,6 +132,9 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		if cfg.BuildVersion != buildinfo.Get().Version {
 			t.Errorf("expected BuildVersion to be %s, got %s", buildinfo.Get().Version, cfg.BuildVersion)
 		}
+		if cfg.LoginSubtitle != "Welcome" {
+			t.Errorf("expected LoginSubtitle to be preserved, got %s", cfg.LoginSubtitle)
+		}
 	})
 	t.Run("partial-custom-values", func(t *testing.T) {
 		cfg := &Config{
@@ -157,6 +164,9 @@ func TestConfig_ValidateAndSetDefaults(t *testing.T) {
 		var expectedIntervalMs = int64(defaultConfigRefreshInterval.Milliseconds())
 		if cfg.ConfigRefreshIntervalMs != expectedIntervalMs {
 			t.Errorf("expected ConfigRefreshIntervalMs to be %d, got %d", expectedIntervalMs, cfg.ConfigRefreshIntervalMs)
+		}
+		if cfg.LoginSubtitle != defaultLoginSubtitle {
+			t.Errorf("expected LoginSubtitle to use default, got %s", cfg.LoginSubtitle)
 		}
 	})
 }
@@ -225,6 +235,9 @@ func TestGetDefaultConfig(t *testing.T) {
 	}
 	if len(defaultConfig.BuildVersion) > 0 {
 		t.Errorf("expected BuildVersion to be empty, got %s", defaultConfig.BuildVersion)
+	}
+	if defaultConfig.LoginSubtitle != defaultLoginSubtitle {
+		t.Error("expected GetDefaultConfig() to return defaultLoginSubtitle, got", defaultConfig.LoginSubtitle)
 	}
 }
 

@@ -13,6 +13,7 @@
             defaultFilterBy: "{{ .UI.DefaultFilterBy }}",
             configRefreshInterval: "{{ .UI.ConfigRefreshIntervalMs }}", 
             buildVersion: "{{ .UI.BuildVersion }}",
+            loginSubtitle: "{{ .UI.LoginSubtitle }}",
             stateColors: {},
           };
           Function(`{{- range .UI.Buttons}}window.config.buttons.push({name:"{{ .Name }}",link:"{{ .Link }}"});{{end}}`)();
