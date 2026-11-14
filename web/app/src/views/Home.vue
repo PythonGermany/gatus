@@ -75,12 +75,16 @@
           <div
             v-for="group in combinedGroups"
             :key="group.name"
-            :class="['endpoint-group border rounded-lg overflow-hidden transition-opacity', isDragged('group', group.name) && 'opacity-40']"
+            :class="['endpoint-group border rounded-lg overflow-hidden transition-opacity', draggedClass('group', group.name)]"
+            data-reorder-type="group"
+            :data-reorder-key="group.name"
+            :data-reorder-container="GROUPS_CONTAINER"
             @dragover="onItemDragOver('group', group.name, GROUPS_CONTAINER, $event)"
           >
             <!-- Group Header -->
             <div
               @click="toggleGroupCollapse(group.name)"
+              @touchstart.passive="onTouchStart('group', group.name, GROUPS_CONTAINER, $event)"
               class="endpoint-group-header group relative flex items-center justify-between p-4 bg-card border-b cursor-pointer hover:bg-accent/50 transition-colors"
             >
               <span
@@ -124,8 +128,12 @@
                   <div
                     v-for="suite in group.suites"
                     :key="suite.key"
-                    :class="['reorder-item group relative h-full transition-opacity', isDragged('suite', suite.key) && 'opacity-40']"
+                    :class="['reorder-item group relative h-full transition-opacity', draggedClass('suite', suite.key)]"
+                    data-reorder-type="suite"
+                    :data-reorder-key="suite.key"
+                    :data-reorder-container="group.name"
                     @dragover="onItemDragOver('suite', suite.key, group.name, $event)"
+                    @touchstart.passive="onTouchStart('suite', suite.key, group.name, $event)"
                   >
                     <SuiteCard
                       :suite="suite"
@@ -160,8 +168,12 @@
                   <div
                     v-for="endpoint in group.endpoints"
                     :key="endpoint.key"
-                    :class="['reorder-item group relative h-full transition-opacity', isDragged('endpoint', endpoint.key) && 'opacity-40']"
+                    :class="['reorder-item group relative h-full transition-opacity', draggedClass('endpoint', endpoint.key)]"
+                    data-reorder-type="endpoint"
+                    :data-reorder-key="endpoint.key"
+                    :data-reorder-container="group.name"
                     @dragover="onItemDragOver('endpoint', endpoint.key, group.name, $event)"
+                    @touchstart.passive="onTouchStart('endpoint', endpoint.key, group.name, $event)"
                   >
                     <EndpointCard
                       :endpoint="endpoint"
@@ -202,8 +214,12 @@
               <div
                 v-for="suite in paginatedSuites"
                 :key="suite.key"
-                :class="['reorder-item group relative h-full transition-opacity', isDragged('suite', suite.key) && 'opacity-40']"
+                :class="['reorder-item group relative h-full transition-opacity', draggedClass('suite', suite.key)]"
+                data-reorder-type="suite"
+                :data-reorder-key="suite.key"
+                :data-reorder-container="FLAT_CONTAINER"
                 @dragover="onItemDragOver('suite', suite.key, FLAT_CONTAINER, $event)"
+                @touchstart.passive="onTouchStart('suite', suite.key, FLAT_CONTAINER, $event)"
               >
                 <SuiteCard
                   :suite="suite"
@@ -238,8 +254,12 @@
               <div
                 v-for="endpoint in paginatedEndpoints"
                 :key="endpoint.key"
-                :class="['reorder-item group relative h-full transition-opacity', isDragged('endpoint', endpoint.key) && 'opacity-40']"
+                :class="['reorder-item group relative h-full transition-opacity', draggedClass('endpoint', endpoint.key)]"
+                data-reorder-type="endpoint"
+                :data-reorder-key="endpoint.key"
+                :data-reorder-container="FLAT_CONTAINER"
                 @dragover="onItemDragOver('endpoint', endpoint.key, FLAT_CONTAINER, $event)"
+                @touchstart.passive="onTouchStart('endpoint', endpoint.key, FLAT_CONTAINER, $event)"
               >
                 <EndpointCard
                   :endpoint="endpoint"
@@ -318,6 +338,7 @@ import Loading from '@/components/Loading.vue'
 import AnnouncementBanner from '@/components/AnnouncementBanner.vue'
 import PastAnnouncements from '@/components/PastAnnouncements.vue'
 import { CUSTOM_ORDER_STORAGE_KEYS, loadOrder, saveOrder, applyOrder, moveKey } from '@/utils/customOrder'
+import { createAutoScroller } from '@/utils/dragAutoScroll'
 
 const props = defineProps({
   announcements: {
@@ -357,6 +378,10 @@ const FLAT_CONTAINER = '__flat__'
 const GROUPS_CONTAINER = '__groups__'
 const REORDER_COOLDOWN_MS = 250
 const REORDER_ANIMATION_MS = 300
+const LONG_PRESS_MS = 400
+const LONG_PRESS_MOVE_TOLERANCE_PX = 10
+const MOUSE_POINTER_STALE_MS = 150
+const NON_PASSIVE = { passive: false }
 const endpointOrder = ref(loadOrder(CUSTOM_ORDER_STORAGE_KEYS.endpoints))
 const suiteOrder = ref(loadOrder(CUSTOM_ORDER_STORAGE_KEYS.suites))
 const groupOrder = ref(loadOrder(CUSTOM_ORDER_STORAGE_KEYS.groups))
@@ -567,9 +592,103 @@ const isDragged = (type, key) => {
   return drag.value !== null && drag.value.active && drag.value.type === type && drag.value.key === key
 }
 
-const onDragStart = (type, key, container, event) => {
+// Touch drags have no native drag image, so the item is lifted in place instead of dimmed
+const draggedClass = (type, key) => {
+  if (!isDragged(type, key)) return null
+  return drag.value.touch ? 'reorder-lifted' : 'opacity-40'
+}
+
+const findReorderElement = (type, element) => {
+  return element?.closest(type === 'group' ? '.endpoint-group' : '.reorder-item')
+}
+
+// Last known pointer position of the active drag (kept outside of reactivity, it changes on every move)
+let pointer = null
+
+const onDocumentDragOver = (event) => {
+  pointer = { x: event.clientX, y: event.clientY, at: performance.now() }
+}
+
+// Moves the touch-dragged item to the reorder target under the finger
+const moveToPointer = () => {
+  if (!drag.value?.touch || !pointer) return
+  const { type, container } = drag.value
+  const target = document.elementFromPoint(pointer.x, pointer.y)?.closest(`[data-reorder-type="${type}"]`)
+  if (!target || target.dataset.reorderContainer !== container) return
+  moveDraggedTo(type, target.dataset.reorderKey, target.getBoundingClientRect(), pointer.y)
+}
+
+const autoScroller = createAutoScroller({
+  getPointerY: () => {
+    if (!drag.value || !pointer) return null
+    // dragover stops firing once the cursor leaves the window
+    if (!drag.value.touch && performance.now() - pointer.at > MOUSE_POINTER_STALE_MS) return null
+    return pointer.y
+  },
+  onFrame: moveToPointer
+})
+
+const beginDrag = (type, key, container, item, touch) => {
+  drag.value = {
+    type,
+    key,
+    container,
+    snapshot: reorderLists[type].order.value,
+    height: item ? item.getBoundingClientRect().height : 0,
+    lastMoveAt: 0,
+    dropped: false,
+    active: touch,
+    touch
+  }
+  pointer = null
+  enableReorderAnimation(true)
+  if (touch) {
+    document.addEventListener('touchmove', onTouchDragMove, NON_PASSIVE)
+    document.addEventListener('touchend', onTouchDragEnd, NON_PASSIVE)
+    document.addEventListener('touchcancel', onTouchDragCancel)
+  } else {
+    document.addEventListener('dragover', onDocumentDragOver)
+  }
+  autoScroller.start()
+}
+
+const moveDraggedTo = (type, key, rect, clientY) => {
+  if (key === drag.value.key) return
+  const now = performance.now()
+  // Wait for the previous move animation, otherwise items moving under the cursor would swap back
+  if (now - drag.value.lastMoveAt < REORDER_COOLDOWN_MS) return
+  if (type === 'group') {
+    // Groups differ in height: only move once the dragged group would end up under the cursor
+    const names = combinedGroups.value.map(group => group.name)
+    const movingDown = names.indexOf(drag.value.key) < names.indexOf(key)
+    const threshold = Math.min(drag.value.height, rect.height)
+    if (movingDown ? clientY < rect.bottom - threshold : clientY > rect.top + threshold) return
+  }
   const list = reorderLists[type]
-  const item = event.currentTarget.closest(type === 'group' ? '.endpoint-group' : '.reorder-item')
+  list.order.value = moveKey(list.order.value, list.allKeys(), drag.value.key, key)
+  drag.value.lastMoveAt = now
+}
+
+const finishDrag = (commit) => {
+  if (!drag.value) return
+  const list = reorderLists[drag.value.type]
+  if (commit) {
+    saveOrder(list.storageKey, list.order.value)
+  } else {
+    list.order.value = drag.value.snapshot
+  }
+  autoScroller.stop()
+  document.removeEventListener('dragover', onDocumentDragOver)
+  document.removeEventListener('touchmove', onTouchDragMove, NON_PASSIVE)
+  document.removeEventListener('touchend', onTouchDragEnd, NON_PASSIVE)
+  document.removeEventListener('touchcancel', onTouchDragCancel)
+  pointer = null
+  drag.value = null
+  enableReorderAnimation()
+}
+
+const onDragStart = (type, key, container, event) => {
+  const item = findReorderElement(type, event.currentTarget)
   const dragImage = type === 'group' ? item?.querySelector('.endpoint-group-header') : item
   event.dataTransfer.effectAllowed = 'move'
   event.dataTransfer.setData('text/plain', key)
@@ -577,17 +696,7 @@ const onDragStart = (type, key, container, event) => {
     const rect = dragImage.getBoundingClientRect()
     event.dataTransfer.setDragImage(dragImage, event.clientX - rect.left, event.clientY - rect.top)
   }
-  drag.value = {
-    type,
-    key,
-    container,
-    snapshot: list.order.value,
-    height: item ? item.getBoundingClientRect().height : 0,
-    lastMoveAt: 0,
-    dropped: false,
-    active: false
-  }
-  enableReorderAnimation(true)
+  beginDrag(type, key, container, item, false)
   // Dim the dragged item only after the browser has captured the drag image
   setTimeout(() => {
     if (drag.value && drag.value.key === key) {
@@ -600,21 +709,7 @@ const onItemDragOver = (type, key, container, event) => {
   if (!matchesDrag(type, container)) return
   event.preventDefault()
   event.dataTransfer.dropEffect = 'move'
-  if (key === drag.value.key) return
-  const now = performance.now()
-  // Wait for the previous move animation, otherwise items moving under the cursor would swap back
-  if (now - drag.value.lastMoveAt < REORDER_COOLDOWN_MS) return
-  if (type === 'group') {
-    // Groups differ in height: only move once the dragged group would end up under the cursor
-    const names = combinedGroups.value.map(group => group.name)
-    const movingDown = names.indexOf(drag.value.key) < names.indexOf(key)
-    const rect = event.currentTarget.getBoundingClientRect()
-    const threshold = Math.min(drag.value.height, rect.height)
-    if (movingDown ? event.clientY < rect.bottom - threshold : event.clientY > rect.top + threshold) return
-  }
-  const list = reorderLists[type]
-  list.order.value = moveKey(list.order.value, list.allKeys(), drag.value.key, key)
-  drag.value.lastMoveAt = now
+  moveDraggedTo(type, key, event.currentTarget.getBoundingClientRect(), event.clientY)
 }
 
 const onListDragOver = (type, container, event) => {
@@ -630,17 +725,93 @@ const onListDrop = (type, container, event) => {
 }
 
 const onDragEnd = () => {
-  if (!drag.value) return
-  const list = reorderLists[drag.value.type]
-  if (drag.value.dropped) {
-    saveOrder(list.storageKey, list.order.value)
-  } else {
-    // Drag was cancelled or released outside of its list
-    list.order.value = drag.value.snapshot
-  }
-  drag.value = null
-  enableReorderAnimation()
+  if (!drag.value || drag.value.touch) return
+  // Not dropped means the drag was cancelled or released outside of its list
+  finishDrag(drag.value.dropped)
 }
+
+// Touch devices have no drag handles: a long press on a card or group header starts the drag instead
+let longPress = null
+
+const onLongPressTouchMove = (event) => {
+  const touch = event.touches[0]
+  if (event.touches.length !== 1 || Math.hypot(touch.clientX - longPress.startX, touch.clientY - longPress.startY) > LONG_PRESS_MOVE_TOLERANCE_PX) {
+    // Scrolling, zooming or another gesture
+    cancelLongPress()
+    return
+  }
+  longPress.x = touch.clientX
+  longPress.y = touch.clientY
+}
+
+const cancelLongPress = () => {
+  if (!longPress) return
+  clearTimeout(longPress.timer)
+  document.removeEventListener('touchmove', onLongPressTouchMove)
+  document.removeEventListener('touchend', cancelLongPress)
+  document.removeEventListener('touchcancel', cancelLongPress)
+  longPress = null
+}
+
+const startTouchDrag = (type, key, container, item) => {
+  const { x, y } = longPress
+  cancelLongPress()
+  if (!canReorder.value || drag.value) return
+  beginDrag(type, key, container, item, true)
+  pointer = { x, y, at: performance.now() }
+  try {
+    navigator.vibrate?.(15)
+  } catch (_) {
+    // haptic feedback is optional
+  }
+}
+
+const onTouchStart = (type, key, container, event) => {
+  cancelLongPress()
+  if (!canReorder.value || drag.value || event.touches.length !== 1) return
+  const touch = event.touches[0]
+  const item = findReorderElement(type, event.currentTarget)
+  longPress = {
+    startX: touch.clientX,
+    startY: touch.clientY,
+    x: touch.clientX,
+    y: touch.clientY,
+    timer: setTimeout(() => startTouchDrag(type, key, container, item), LONG_PRESS_MS)
+  }
+  document.addEventListener('touchmove', onLongPressTouchMove, { passive: true })
+  document.addEventListener('touchend', cancelLongPress)
+  document.addEventListener('touchcancel', cancelLongPress)
+}
+
+const onTouchDragMove = (event) => {
+  // Keep the page from scrolling under the finger, auto-scroll takes over near the edges
+  event.preventDefault()
+  const touch = event.touches[0]
+  if (!touch) return
+  pointer = { x: touch.clientX, y: touch.clientY, at: performance.now() }
+  moveToPointer()
+}
+
+const onTouchDragEnd = (event) => {
+  // Suppress the click that would otherwise open the card or toggle the group
+  event.preventDefault()
+  finishDrag(true)
+}
+
+const onTouchDragCancel = () => finishDrag(false)
+
+// Android opens a context menu on long press
+const onContextMenu = (event) => {
+  if (longPress || drag.value?.touch) event.preventDefault()
+}
+
+onMounted(() => document.addEventListener('contextmenu', onContextMenu))
+
+onUnmounted(() => {
+  document.removeEventListener('contextmenu', onContextMenu)
+  cancelLongPress()
+  finishDrag(false)
+})
 
 const resetCustomOrder = () => {
   Object.values(reorderLists).forEach(list => {
@@ -876,10 +1047,24 @@ onMounted(() => {
   width: 1rem;
 }
 
-/* Devices without hover (touch) would never reveal the handles */
+.reorder-lifted {
+  position: relative;
+  z-index: 20;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 2px hsl(var(--ring)), 0 12px 28px -8px rgb(0 0 0 / 0.35);
+}
+
+/* Touch devices reorder via long press instead of handles */
 @media (hover: none) {
   .drag-handle.drag-handle {
-    opacity: 1;
+    display: none;
+  }
+
+  .reorder-item,
+  .endpoint-group-header {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 }
 </style>
