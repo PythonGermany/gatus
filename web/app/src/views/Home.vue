@@ -85,6 +85,7 @@
             <div
               @click="toggleGroupCollapse(group.name)"
               @touchstart.passive="onTouchStart('group', group.name, GROUPS_CONTAINER, $event)"
+              @touchmove="onReorderTouchMove"
               class="endpoint-group-header group relative flex items-center justify-between p-4 bg-card border-b cursor-pointer hover:bg-accent/50 transition-colors"
             >
               <span
@@ -134,6 +135,7 @@
                     :data-reorder-container="group.name"
                     @dragover="onItemDragOver('suite', suite.key, group.name, $event)"
                     @touchstart.passive="onTouchStart('suite', suite.key, group.name, $event)"
+                    @touchmove="onReorderTouchMove"
                   >
                     <SuiteCard
                       :suite="suite"
@@ -174,6 +176,7 @@
                     :data-reorder-container="group.name"
                     @dragover="onItemDragOver('endpoint', endpoint.key, group.name, $event)"
                     @touchstart.passive="onTouchStart('endpoint', endpoint.key, group.name, $event)"
+                    @touchmove="onReorderTouchMove"
                   >
                     <EndpointCard
                       :endpoint="endpoint"
@@ -220,6 +223,7 @@
                 :data-reorder-container="FLAT_CONTAINER"
                 @dragover="onItemDragOver('suite', suite.key, FLAT_CONTAINER, $event)"
                 @touchstart.passive="onTouchStart('suite', suite.key, FLAT_CONTAINER, $event)"
+                @touchmove="onReorderTouchMove"
               >
                 <SuiteCard
                   :suite="suite"
@@ -260,6 +264,7 @@
                 :data-reorder-container="FLAT_CONTAINER"
                 @dragover="onItemDragOver('endpoint', endpoint.key, FLAT_CONTAINER, $event)"
                 @touchstart.passive="onTouchStart('endpoint', endpoint.key, FLAT_CONTAINER, $event)"
+                @touchmove="onReorderTouchMove"
               >
                 <EndpointCard
                   :endpoint="endpoint"
@@ -643,7 +648,6 @@ const beginDrag = (type, key, container, item, touch) => {
   pointer = null
   enableReorderAnimation(true)
   if (touch) {
-    document.addEventListener('touchmove', onTouchDragMove, NON_PASSIVE)
     document.addEventListener('touchend', onTouchDragEnd, NON_PASSIVE)
     document.addEventListener('touchcancel', onTouchDragCancel)
   } else {
@@ -679,7 +683,6 @@ const finishDrag = (commit) => {
   }
   autoScroller.stop()
   document.removeEventListener('dragover', onDocumentDragOver)
-  document.removeEventListener('touchmove', onTouchDragMove, NON_PASSIVE)
   document.removeEventListener('touchend', onTouchDragEnd, NON_PASSIVE)
   document.removeEventListener('touchcancel', onTouchDragCancel)
   pointer = null
@@ -733,21 +736,9 @@ const onDragEnd = () => {
 // Touch devices have no drag handles: a long press on a card or group header starts the drag instead
 let longPress = null
 
-const onLongPressTouchMove = (event) => {
-  const touch = event.touches[0]
-  if (event.touches.length !== 1 || Math.hypot(touch.clientX - longPress.startX, touch.clientY - longPress.startY) > LONG_PRESS_MOVE_TOLERANCE_PX) {
-    // Scrolling, zooming or another gesture
-    cancelLongPress()
-    return
-  }
-  longPress.x = touch.clientX
-  longPress.y = touch.clientY
-}
-
 const cancelLongPress = () => {
   if (!longPress) return
   clearTimeout(longPress.timer)
-  document.removeEventListener('touchmove', onLongPressTouchMove)
   document.removeEventListener('touchend', cancelLongPress)
   document.removeEventListener('touchcancel', cancelLongPress)
   longPress = null
@@ -778,18 +769,31 @@ const onTouchStart = (type, key, container, event) => {
     y: touch.clientY,
     timer: setTimeout(() => startTouchDrag(type, key, container, item), LONG_PRESS_MS)
   }
-  document.addEventListener('touchmove', onLongPressTouchMove, { passive: true })
   document.addEventListener('touchend', cancelLongPress)
   document.addEventListener('touchcancel', cancelLongPress)
 }
 
-const onTouchDragMove = (event) => {
-  // Keep the page from scrolling under the finger, auto-scroll takes over near the edges
-  event.preventDefault()
+// Bound non-passive in the template next to touchstart: browsers decide at touchstart whether a gesture may be
+// cancelled, so a listener added once the drag begins can no longer stop the page from scrolling
+const onReorderTouchMove = (event) => {
   const touch = event.touches[0]
   if (!touch) return
-  pointer = { x: touch.clientX, y: touch.clientY, at: performance.now() }
-  moveToPointer()
+  if (drag.value?.touch) {
+    // Keep the page from scrolling under the finger, auto-scroll takes over near the edges
+    event.preventDefault()
+    pointer = { x: touch.clientX, y: touch.clientY, at: performance.now() }
+    moveToPointer()
+    return
+  }
+  if (!longPress) return
+  // Not cancelable means the page is already scrolling and a drag could no longer stop it
+  if (!event.cancelable || event.touches.length !== 1 || Math.hypot(touch.clientX - longPress.startX, touch.clientY - longPress.startY) > LONG_PRESS_MOVE_TOLERANCE_PX) {
+    // Scrolling, zooming or another gesture
+    cancelLongPress()
+    return
+  }
+  longPress.x = touch.clientX
+  longPress.y = touch.clientY
 }
 
 const onTouchDragEnd = (event) => {
