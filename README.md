@@ -134,6 +134,7 @@ Have any feedback or questions? [Create a discussion](https://github.com/TwiN/ga
   - [Reloading configuration on the fly](#reloading-configuration-on-the-fly)
   - [Endpoint groups](#endpoint-groups)
   - [How do I sort by group by default?](#how-do-i-sort-by-group-by-default)
+  - [How do I reorder endpoints and groups?](#how-do-i-reorder-endpoints-and-groups)
   - [Exposing Gatus on a custom path](#exposing-gatus-on-a-custom-path)
   - [Exposing Gatus on a custom port](#exposing-gatus-on-a-custom-port)
   - [Use environment variables in config files](#use-environment-variables-in-config-files)
@@ -3486,6 +3487,13 @@ ui:
 ```
 Note that if a user has already sorted the dashboard by a different field, the default sort will not be applied unless the user
 clears their browser's localstorage.
+
+
+### How do I reorder endpoints and groups?
+- Drag a card or group header by its grip handle (shown on hover) while sorting by `Name` or `Group`
+- The custom order is stored in the browser's localstorage
+- Endpoints, suites and groups added later are appended at the end
+- The reset button next to the response time toggle restores the default order
 
 
 ### Exposing Gatus on a custom path
