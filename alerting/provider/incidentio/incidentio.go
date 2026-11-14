@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"maps"
 	"net/http"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"github.com/TwiN/gatus/v5/alerting/alert"
 	"github.com/TwiN/gatus/v5/client"
 	"github.com/TwiN/gatus/v5/config/endpoint"
-	"github.com/TwiN/logr"
 	"gopkg.in/yaml.v3"
 )
 
@@ -118,7 +118,7 @@ func (provider *AlertProvider) Send(ep *endpoint.Endpoint, alert *alert.Alert, r
 	err = json.NewDecoder(response.Body).Decode(&incidentioResponse)
 	if err != nil {
 		// Silently fail. We don't want to create tons of alerts just because we failed to parse the body.
-		logr.Errorf("[incidentio.Send] Ran into error decoding pagerduty response: %s", err.Error())
+		slog.Error("Error decoding incident.io response", "error", err)
 	}
 	alert.ResolveKey = incidentioResponse.DeduplicationKey
 	return err

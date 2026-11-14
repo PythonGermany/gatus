@@ -3,10 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/TwiN/gatus/v5/config"
 	"github.com/TwiN/gatus/v5/security"
-	"github.com/TwiN/logr"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -22,7 +22,7 @@ func (handler ConfigHandler) GetConfig(c *fiber.Ctx) error {
 		hasOIDC = handler.securityConfig.OIDC != nil
 		isAuthenticated = handler.securityConfig.IsAuthenticated(c)
 	}
-	logr.Debugf("[api.GetConfig] /api/v1/config: oidc=%v, authenticated=%v", hasOIDC, isAuthenticated)
+	slog.Debug("Serving config", "oidc", hasOIDC, "authenticated", isAuthenticated)
 
 	// Prepare response with announcements
 	response := map[string]interface{}{

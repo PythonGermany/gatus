@@ -358,12 +358,13 @@ gatus-cli external-endpoint push --url https://status.example.org --key "core_ex
 
 or send an HTTP request:
 ```
-POST /api/v1/endpoints/{key}/external?success={success}&error={error}&duration={duration}
+POST /api/v1/endpoints/{key}/external?success={success}&state={}&error={error}&duration={duration}
 ```
 Where:
 - `{key}` has the pattern `<GROUP_NAME>_<ENDPOINT_NAME>` in which both variables have ` `, `/`, `_`, `,`, `.`, `#`, `+` and `&` replaced by `-`.
   - Using the example configuration above, the key would be `core_ext-ep-test`.
 - `{success}` is a boolean (`true` or `false`) value indicating whether the health check was successful or not.
+- `{state}` (optional) is a string value indicating the state of the endpoint (for colors the work in the UI the state needs to be configured in the config)
 - `{error}` (optional): a string describing the reason for a failed health check. If {success} is false, this should contain the error message; if the check is successful, this will be ignored.
 - `{duration}` (optional): the time that the request took as a duration string (e.g. 10s).
 
@@ -556,6 +557,8 @@ Allows you to configure the application wide defaults for the dashboard's UI. So
 | `ui.dark-mode`            | Whether to enable dark mode by default. Note that this is superseded by the user's operating system theme preferences.                   | `true`                                              |
 | `ui.default-sort-by`      | Default sorting option for endpoints in the dashboard. Can be `name`, `group`, or `health`. Note that user preferences override this.    | `name`                                              |
 | `ui.default-filter-by`    | Default filter option for endpoints in the dashboard. Can be `none`, `failing`, or `unstable`. Note that user preferences override this. | `none`                                              |
+| `ui.config-refresh-interval` | Interval for the UI config update used to update announcements (e.g. `1h`, `30m`)                                                        | `10m`                      |
+| `ui.show-version`            | Show version in footer                                                                                                                   | `false`                    |
 | `ui.login-subtitle`       | Subtitle displayed on the OIDC login page.                                                                                               | `System Monitoring Dashboard`                       |
 
 ### Announcements
@@ -1802,6 +1805,10 @@ The JSON payload sent to the n8n webhook will include:
 [ntfy](https://github.com/binwiederhier/ntfy) is an amazing project that allows you to subscribe to desktop
 and mobile notifications, making it an awesome addition to Gatus.
 
+The following placeholders are supported in `click`:
+- `[ENDPOINT_GROUP]` - Resolved from `endpoints[].group`
+- `[ENDPOINT_NAME]` - Resolved from `endpoints[].name`
+
 Example:
 ```yaml
 alerting:
@@ -2896,6 +2903,7 @@ endpoint on the same port your application is configured to run on (`web.port`).
 
 | Metric name                                  | Type    | Description                                                                | Labels                          | Relevant endpoint types |
 |:---------------------------------------------|:--------|:---------------------------------------------------------------------------|:--------------------------------|:------------------------|
+| gatus_build_info                             | gauge   | Build information about the instance                                       | version, revision, build_date   | None                    |
 | gatus_results_total                          | counter | Number of results per endpoint per success state                           | key, group, name, type, success | All                     |
 | gatus_results_code_total                     | counter | Total number of results by code                                            | key, group, name, type, code    | DNS, HTTP               |
 | gatus_results_connected_total                | counter | Total number of results in which a connection was successfully established | key, group, name, type          | All                     |

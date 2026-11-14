@@ -95,7 +95,13 @@ const u=({name:t,iconNode:e,absoluteStrokeWidth:n,"absolute-stroke-width":o,stro
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const r=(0,i.Z)("circle-arrow-down",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"M12 8v8",key:"napkw2"}],["path",{d:"m8 12 4 4 4-4",key:"k98ssh"}]])},7779:function(t,e,n){n.d(e,{Z:function(){return r}});var i=n(4264);
+ */const r=(0,i.Z)("circle-arrow-down",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"M12 8v8",key:"napkw2"}],["path",{d:"m8 12 4 4 4-4",key:"k98ssh"}]])},8866:function(t,e,n){n.d(e,{Z:function(){return r}});var i=n(4264);
+/**
+ * @license lucide-vue-next v0.539.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const r=(0,i.Z)("circle-arrow-right",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"m12 16 4-4-4-4",key:"1i9zcv"}],["path",{d:"M8 12h8",key:"1wcyev"}]])},7779:function(t,e,n){n.d(e,{Z:function(){return r}});var i=n(4264);
 /**
  * @license lucide-vue-next v0.539.0 - ISC
  *

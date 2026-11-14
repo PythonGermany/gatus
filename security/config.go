@@ -2,10 +2,10 @@ package security
 
 import (
 	"encoding/base64"
+	"log/slog"
 	"net/http"
 
 	g8 "github.com/TwiN/g8/v2"
-	"github.com/TwiN/logr"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
@@ -35,12 +35,12 @@ func (c *Config) ValidateAndSetDefaults() bool {
 func (c *Config) RegisterHandlers(router fiber.Router) error {
 	if c.OIDC != nil {
 		if err := c.OIDC.initialize(); err != nil {
-			logr.Errorf("[security.RegisterHandlers] Failed to initialize OIDC provider: %s", err.Error())
+			slog.Error("Failed to initialize OIDC provider", "error", err.Error())
 			return err
 		}
 		router.All("/oidc/login", c.OIDC.loginHandler)
 		router.All("/authorization-code/callback", adaptor.HTTPHandlerFunc(c.OIDC.callbackHandler))
-		logr.Infof("[security.RegisterHandlers] Registered OIDC routes (/oidc/login, /authorization-code/callback)")
+		slog.Info("Registered OIDC routes", "routes", []string{"/oidc/login", "/authorization-code/callback"})
 	}
 	return nil
 }
@@ -101,19 +101,19 @@ func (c *Config) IsAuthenticated(ctx *fiber.Ctx) bool {
 		// TODO: Update g8 to support fasthttp natively? (see g8's fasthttp branch)
 		request, err := adaptor.ConvertRequest(ctx, false)
 		if err != nil {
-			logr.Errorf("[security.IsAuthenticated] Unexpected error converting request: %v", err)
+			slog.Error("Undexpected error converting request", "error", err)
 			return false
 		}
 		token := c.gate.ExtractTokenFromRequest(request)
 		if len(token) == 0 {
-			logr.Debug("[security.IsAuthenticated] No session token found in request")
+			slog.Debug("No session token found in request")
 			return false
 		}
 		_, hasSession := sessions.Get(token)
 		if hasSession {
-			logr.Debug("[security.IsAuthenticated] Active session found")
+			slog.Debug("Active session found")
 		} else {
-			logr.Debug("[security.IsAuthenticated] Session token expired or invalid")
+			slog.Debug("Session token expired or invalid")
 		}
 		return hasSession
 	}

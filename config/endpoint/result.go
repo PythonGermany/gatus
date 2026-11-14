@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"log/slog"
 	"slices"
 	"time"
 )
@@ -36,6 +37,9 @@ type Result struct {
 	// Success whether the result signifies a success or not
 	Success bool `json:"success"`
 
+	// State of the endpoint after evaluating the result
+	State string `json:"state,omitempty"`
+
 	// Timestamp when the request was sent
 	Timestamp time.Time `json:"timestamp"`
 
@@ -62,6 +66,17 @@ type Result struct {
 	// Name of the endpoint (ONLY USED FOR SUITES)
 	// Group is not needed because it's inherited from the suite
 	Name string `json:"name,omitempty"`
+}
+
+func (r *Result) GetLogAttribute() slog.Attr {
+	return slog.Attr{
+		Key: "result",
+		Value: slog.GroupValue(
+			slog.Bool("success", r.Success),
+			slog.Duration("duration", r.Duration),
+			slog.Int("error_count", len(r.Errors)),
+		),
+	}
 }
 
 // AddError adds an error to the result's list of errors.

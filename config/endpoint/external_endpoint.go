@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/TwiN/gatus/v5/alerting/alert"
@@ -55,6 +56,16 @@ type ExternalEndpoint struct {
 	// call, or every heartbeat tick / pushed result would see a zero value and
 	// re-send the alert, ignoring minimum-reminder-interval (#1765).
 	LastReminderSent time.Time `yaml:"-"`
+}
+
+func (ee *ExternalEndpoint) GetLogAttribute() slog.Attr {
+	return slog.Attr{
+		Key: "external-endpoint",
+		Value: slog.GroupValue(
+			slog.String("group", ee.Group),
+			slog.String("name", ee.Name),
+		),
+	}
 }
 
 // ValidateAndSetDefaults validates the ExternalEndpoint and sets the default values
