@@ -8,8 +8,18 @@
             <p class="text-muted-foreground mt-2">{{ dashboardSubheading }}</p>
           </div>
           <div class="flex items-center gap-4">
-            <Button v-if="hasCustomOrder" variant="ghost" size="icon" @click="resetCustomOrder" title="Reset custom order">
-              <ListRestart class="h-5 w-5" />
+            <Button
+              v-if="hasCustomOrder"
+              ref="resetButton"
+              variant="ghost"
+              size="icon"
+              @click="onResetClick"
+              @mouseleave="disarmReset"
+              @blur="disarmReset"
+              :title="resetArmed ? 'Click again to reset custom order' : 'Reset custom order'"
+            >
+              <Check v-if="resetArmed" class="h-5 w-5" />
+              <ListRestart v-else class="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
@@ -297,8 +307,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { Activity, Timer, RefreshCw, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, CheckCircle, GripVertical, ListRestart } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Activity, Timer, RefreshCw, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, CheckCircle, GripVertical, ListRestart } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import EndpointCard from '@/components/EndpointCard.vue'
 import SuiteCard from '@/components/SuiteCard.vue'
@@ -639,6 +649,36 @@ const resetCustomOrder = () => {
   })
   enableReorderAnimation()
 }
+
+// The reset button needs two consecutive clicks: the first arms it, the second resets
+const resetArmed = ref(false)
+const resetButton = ref(null)
+
+const onOutsidePointerDown = (event) => {
+  if (resetButton.value?.$el?.contains(event.target)) return
+  disarmReset()
+}
+
+const armReset = () => {
+  resetArmed.value = true
+  document.addEventListener('pointerdown', onOutsidePointerDown, true)
+}
+
+const disarmReset = () => {
+  resetArmed.value = false
+  document.removeEventListener('pointerdown', onOutsidePointerDown, true)
+}
+
+const onResetClick = () => {
+  if (resetArmed.value) {
+    resetCustomOrder()
+    disarmReset()
+  } else {
+    armReset()
+  }
+}
+
+onUnmounted(disarmReset)
 
 const paginatedEndpoints = computed(() => {
   if (groupByGroup.value) {
